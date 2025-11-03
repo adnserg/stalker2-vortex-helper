@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
+using System.Windows.Interop;
 using Stalker2ModManager.Models;
 using Stalker2ModManager.Services;
 
@@ -18,6 +20,7 @@ namespace Stalker2ModManager
         private ObservableCollection<ModInfo> _mods;
         private ModInfo _draggedMod;
         private Point _dragStartPoint;
+        private System.Windows.Threading.DispatcherTimer _scrollTimer;
 
         public MainWindow()
         {
@@ -30,6 +33,117 @@ namespace Stalker2ModManager
 
             _logger.LogInfo("Application started");
             LoadConfig();
+            
+            // Подписываемся на изменение размера окна
+            SizeChanged += MainWindow_SizeChanged;
+            
+            // Инициализируем таймер для автоскролла
+            _scrollTimer = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(30) // Обновляем каждые 30мс для плавности
+            };
+            _scrollTimer.Tick += ScrollTimer_Tick;
+        }
+
+        private void ScrollTimer_Tick(object sender, EventArgs e)
+        {
+            if (ModsListBox == null)
+            {
+                _scrollTimer.Stop();
+                return;
+            }
+
+            var scrollViewer = GetScrollViewer(ModsListBox);
+            if (scrollViewer == null)
+            {
+                _scrollTimer.Stop();
+                return;
+            }
+
+            // Получаем позицию мыши относительно ListBox
+            var mousePos = System.Windows.Input.Mouse.GetPosition(ModsListBox);
+            var scrollArea = 50.0; // Область автоскролла (пиксели от края)
+            var baseScrollSpeed = 1.5; // Базовая скорость скролла
+            var maxScrollSpeed = 4.0; // Максимальная скорость скролла
+
+            // Проверяем позицию мыши относительно ListBox
+            if (mousePos.Y < scrollArea && mousePos.Y >= 0)
+            {
+                // Скроллим вверх с адаптивной скоростью (чем ближе к краю, тем быстрее)
+                var distanceFromEdge = mousePos.Y;
+                var speedFactor = 1.0 - (distanceFromEdge / scrollArea); // От 0 до 1
+                var scrollSpeed = baseScrollSpeed + (maxScrollSpeed - baseScrollSpeed) * speedFactor;
+                
+                var newOffset = scrollViewer.VerticalOffset - scrollSpeed;
+                if (newOffset >= 0)
+                {
+                    scrollViewer.ScrollToVerticalOffset(newOffset);
+                }
+                else
+                {
+                    scrollViewer.ScrollToVerticalOffset(0);
+                    _scrollTimer.Stop();
+                }
+            }
+            else if (mousePos.Y > ModsListBox.ActualHeight - scrollArea && mousePos.Y <= ModsListBox.ActualHeight)
+            {
+                // Скроллим вниз с адаптивной скоростью
+                var distanceFromEdge = ModsListBox.ActualHeight - mousePos.Y;
+                var speedFactor = 1.0 - (distanceFromEdge / scrollArea); // От 0 до 1
+                var scrollSpeed = baseScrollSpeed + (maxScrollSpeed - baseScrollSpeed) * speedFactor;
+                
+                var newOffset = scrollViewer.VerticalOffset + scrollSpeed;
+                var maxOffset = scrollViewer.ScrollableHeight;
+                if (newOffset <= maxOffset)
+                {
+                    scrollViewer.ScrollToVerticalOffset(newOffset);
+                }
+                else
+                {
+                    scrollViewer.ScrollToVerticalOffset(maxOffset);
+                    _scrollTimer.Stop();
+                }
+            }
+            else
+            {
+                // Мышь в середине - останавливаем скролл
+                _scrollTimer.Stop();
+            }
+        }
+
+        private System.Windows.Controls.ScrollViewer GetScrollViewer(System.Windows.Controls.ListBox listBox)
+        {
+            if (listBox == null) return null;
+            
+            // Ищем ScrollViewer внутри ListBox
+            for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(listBox); i++)
+            {
+                var child = System.Windows.Media.VisualTreeHelper.GetChild(listBox, i);
+                if (child is System.Windows.Controls.ScrollViewer scrollViewer)
+                {
+                    return scrollViewer;
+                }
+                
+                // Рекурсивно ищем во вложенных элементах
+                for (int j = 0; j < System.Windows.Media.VisualTreeHelper.GetChildrenCount(child); j++)
+                {
+                    var grandChild = System.Windows.Media.VisualTreeHelper.GetChild(child, j);
+                    if (grandChild is System.Windows.Controls.ScrollViewer sv)
+                    {
+                        return sv;
+                    }
+                }
+            }
+            
+            // Если не нашли внутри, ищем в родителях
+            for (System.Windows.DependencyObject depObj = listBox; depObj != null; depObj = System.Windows.Media.VisualTreeHelper.GetParent(depObj))
+            {
+                if (depObj is System.Windows.Controls.ScrollViewer scrollViewer)
+                {
+                    return scrollViewer;
+                }
+            }
+            return null;
         }
 
         private void BrowseVortexPath_Click(object sender, RoutedEventArgs e)
@@ -114,12 +228,12 @@ namespace Stalker2ModManager
         {
             try
             {
-                // Сохраняем пути отдельно
-                var pathsConfig = new ModConfig
-                {
-                    VortexPath = VortexPathTextBox.Text,
-                    TargetPath = TargetPathTextBox.Text
-                };
+                // Загружаем текущий конфиг, чтобы сохранить размер окна
+                var pathsConfig = _configService.LoadPathsConfig();
+                pathsConfig.VortexPath = VortexPathTextBox.Text;
+                pathsConfig.TargetPath = TargetPathTextBox.Text;
+                pathsConfig.WindowWidth = Width;
+                pathsConfig.WindowHeight = Height;
                 _configService.SavePathsConfig(pathsConfig);
                 _logger.LogInfo("Paths config saved");
 
@@ -327,6 +441,13 @@ namespace Stalker2ModManager
             else
             {
                 TargetPathTextBox.Text = pathsConfig.TargetPath;
+            }
+
+            // Загружаем размер окна
+            if (pathsConfig.WindowWidth >= MinWidth && pathsConfig.WindowHeight >= MinHeight)
+            {
+                Width = pathsConfig.WindowWidth;
+                Height = pathsConfig.WindowHeight;
             }
 
             // Загружаем порядок модов
@@ -851,6 +972,7 @@ namespace Stalker2ModManager
                         var data = new System.Windows.DataObject(typeof(ModInfo), _draggedMod);
                         System.Windows.DragDrop.DoDragDrop(listBox, data, System.Windows.DragDropEffects.Move);
                         _draggedMod = null;
+                        _scrollTimer.Stop(); // Останавливаем автоскролл после завершения drag
                     }
                 }
             }
@@ -861,10 +983,71 @@ namespace Stalker2ModManager
             if (e.Data.GetDataPresent(typeof(ModInfo)))
             {
                 e.Effects = System.Windows.DragDropEffects.Move;
+                
+                // Автоскролл при перетаскивании
+                var listBox = sender as System.Windows.Controls.ListBox;
+                if (listBox != null)
+                {
+                    var scrollViewer = GetScrollViewer(listBox);
+                    if (scrollViewer != null && scrollViewer.ScrollableHeight > 0)
+                    {
+                        var mousePos = e.GetPosition(listBox);
+                        var scrollArea = 50.0; // Область автоскролла (пиксели от края)
+                        var baseScrollSpeed = 1.5; // Базовая скорость скролла
+                        var maxScrollSpeed = 4.0; // Максимальная скорость скролла
+                        
+                        // Проверяем, близко ли мышь к краям
+                        if (mousePos.Y < scrollArea && mousePos.Y >= 0)
+                        {
+                            // Скроллим вверх с адаптивной скоростью
+                            var distanceFromEdge = mousePos.Y;
+                            var speedFactor = 1.0 - (distanceFromEdge / scrollArea);
+                            var scrollSpeed = baseScrollSpeed + (maxScrollSpeed - baseScrollSpeed) * speedFactor;
+                            
+                            var newOffset = scrollViewer.VerticalOffset - scrollSpeed;
+                            if (newOffset >= 0)
+                            {
+                                scrollViewer.ScrollToVerticalOffset(newOffset);
+                            }
+                            
+                            // Запускаем таймер для плавного скролла
+                            if (!_scrollTimer.IsEnabled)
+                            {
+                                _scrollTimer.Start();
+                            }
+                        }
+                        else if (mousePos.Y > listBox.ActualHeight - scrollArea && mousePos.Y <= listBox.ActualHeight)
+                        {
+                            // Скроллим вниз с адаптивной скоростью
+                            var distanceFromEdge = listBox.ActualHeight - mousePos.Y;
+                            var speedFactor = 1.0 - (distanceFromEdge / scrollArea);
+                            var scrollSpeed = baseScrollSpeed + (maxScrollSpeed - baseScrollSpeed) * speedFactor;
+                            
+                            var newOffset = scrollViewer.VerticalOffset + scrollSpeed;
+                            var maxOffset = scrollViewer.ScrollableHeight;
+                            if (newOffset <= maxOffset)
+                            {
+                                scrollViewer.ScrollToVerticalOffset(newOffset);
+                            }
+                            
+                            // Запускаем таймер для плавного скролла
+                            if (!_scrollTimer.IsEnabled)
+                            {
+                                _scrollTimer.Start();
+                            }
+                        }
+                        else
+                        {
+                            // Останавливаем таймер, если мышь в середине
+                            _scrollTimer.Stop();
+                        }
+                    }
+                }
             }
             else
             {
                 e.Effects = System.Windows.DragDropEffects.None;
+                _scrollTimer.Stop();
             }
             e.Handled = true;
         }
@@ -907,6 +1090,7 @@ namespace Stalker2ModManager
             }
 
             _draggedMod = null;
+            _scrollTimer.Stop(); // Останавливаем автоскролл при завершении перетаскивания
             e.Handled = true;
         }
 
@@ -945,8 +1129,125 @@ namespace Stalker2ModManager
 
         protected override void OnClosed(EventArgs e)
         {
+            SaveWindowSize();
             _logger.LogInfo("Application closed");
             base.OnClosed(e);
+        }
+
+        private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            SaveWindowSize();
+        }
+
+        private void SaveWindowSize()
+        {
+            try
+            {
+                var pathsConfig = _configService.LoadPathsConfig();
+                pathsConfig.WindowWidth = Width;
+                pathsConfig.WindowHeight = Height;
+                _configService.SavePathsConfig(pathsConfig);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to save window size: {ex.Message}");
+            }
+        }
+
+        // Resize handlers
+        private void ResizeTop_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == System.Windows.Input.MouseButton.Left)
+            {
+                ResizeWindow(WindowResizeDirection.Top);
+            }
+        }
+
+        private void ResizeBottom_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == System.Windows.Input.MouseButton.Left)
+            {
+                ResizeWindow(WindowResizeDirection.Bottom);
+            }
+        }
+
+        private void ResizeLeft_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == System.Windows.Input.MouseButton.Left)
+            {
+                ResizeWindow(WindowResizeDirection.Left);
+            }
+        }
+
+        private void ResizeRight_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == System.Windows.Input.MouseButton.Left)
+            {
+                ResizeWindow(WindowResizeDirection.Right);
+            }
+        }
+
+        private void ResizeTopLeft_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == System.Windows.Input.MouseButton.Left)
+            {
+                ResizeWindow(WindowResizeDirection.TopLeft);
+            }
+        }
+
+        private void ResizeTopRight_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == System.Windows.Input.MouseButton.Left)
+            {
+                ResizeWindow(WindowResizeDirection.TopRight);
+            }
+        }
+
+        private void ResizeBottomLeft_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == System.Windows.Input.MouseButton.Left)
+            {
+                ResizeWindow(WindowResizeDirection.BottomLeft);
+            }
+        }
+
+        private void ResizeBottomRight_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == System.Windows.Input.MouseButton.Left)
+            {
+                ResizeWindow(WindowResizeDirection.BottomRight);
+            }
+        }
+
+        private void ResizeWindow(WindowResizeDirection direction)
+        {
+            var hwnd = new WindowInteropHelper(this).Handle;
+            if (hwnd != IntPtr.Zero)
+            {
+                SendMessage(hwnd, 0x112, (IntPtr)(61440 + (int)direction), IntPtr.Zero);
+            }
+        }
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
+
+        // Visual feedback for resize grips
+        private void ResizeGrip_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Border border)
+            {
+                border.Background = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromArgb(100, 0, 122, 204)); // Более видимый при наведении
+            }
+        }
+
+        private void ResizeGrip_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Border border)
+            {
+                border.Background = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromArgb(51, 0, 122, 204)); // Менее видимый в обычном состоянии
+            }
         }
 
         // Helper method to find parent control
@@ -962,6 +1263,19 @@ namespace Stalker2ModManager
             else
                 return FindParent<T>(parentObject);
         }
+    }
+
+    // Enum for window resize directions
+    enum WindowResizeDirection
+    {
+        Left = 1,
+        Right = 2,
+        Top = 3,
+        TopLeft = 4,
+        TopRight = 5,
+        Bottom = 6,
+        BottomLeft = 7,
+        BottomRight = 8
     }
 }
 
