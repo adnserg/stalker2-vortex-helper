@@ -31,8 +31,8 @@ namespace Stalker2ModManager
         {
             using var dialog = new OpenFileDialog
             {
-                Filter = "JSON files (*.json)|*.json|Text files (*.txt)|*.txt|All files (*.*)|*.*",
-                Title = "Select JSON file with mod order"
+                Filter = "All supported files (*.json;*.txt)|*.json;*.txt|JSON files (*.json)|*.json|Text files (*.txt)|*.txt|All files (*.*)|*.*",
+                Title = "Select JSON or TXT file with mod order"
             };
 
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
@@ -60,7 +60,7 @@ namespace Stalker2ModManager
 
             if (SortBySnapshot && string.IsNullOrWhiteSpace(JsonFilePath))
             {
-                System.Windows.MessageBox.Show("Please select a JSON file first.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                System.Windows.MessageBox.Show("Please select a JSON or TXT file first.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 

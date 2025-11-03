@@ -458,7 +458,9 @@ namespace Stalker2ModManager
             {
                 if (optionsWindow.SortBySnapshot && !string.IsNullOrWhiteSpace(optionsWindow.JsonFilePath))
                 {
-                    _logger.LogInfo($"Sorting mods by JSON file: {optionsWindow.JsonFilePath}");
+                    var fileExt = System.IO.Path.GetExtension(optionsWindow.JsonFilePath).ToLower();
+                    var fileType = fileExt == ".txt" ? "TXT" : "JSON";
+                    _logger.LogInfo($"Sorting mods by {fileType} file: {optionsWindow.JsonFilePath}");
                     SortModsByJsonFile(optionsWindow.JsonFilePath);
                 }
             }
@@ -480,44 +482,84 @@ namespace Stalker2ModManager
                     return;
                 }
 
-                // Читаем выбранный JSON файл
-                var snapshotJson = System.IO.File.ReadAllText(jsonFilePath);
+                // Определяем тип файла
+                var fileExtension = System.IO.Path.GetExtension(jsonFilePath).ToLower();
                 List<string> files = null;
 
-                // Пробуем разные форматы snapshot.json
-                try
+                if (fileExtension == ".txt")
                 {
-                    // Формат 1: Простой массив строк
-                    files = Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(snapshotJson);
+                    _logger.LogInfo($"Reading TXT file: {jsonFilePath}");
+                    // Читаем TXT файл построчно
+                    var lines = System.IO.File.ReadAllLines(jsonFilePath);
+                    files = new List<string>();
+
+                    foreach (var line in lines)
+                    {
+                        var trimmed = line.Trim();
+                        // Пропускаем пустые строки
+                        if (string.IsNullOrEmpty(trimmed))
+                            continue;
+
+                        // Убираем кавычки и запятые, если есть (для формата как в 02.11.25 shining.txt)
+                        trimmed = trimmed.Trim('"', ',', ' ');
+                        
+                        // Если строка содержит путь (с обратным слешем), добавляем её
+                        if (trimmed.Contains("\\") || trimmed.Contains("/"))
+                        {
+                            files.Add(trimmed);
+                        }
+                    }
+
+                    _logger.LogInfo($"Read {files.Count} file paths from TXT file");
+
+                    if (files.Count == 0)
+                    {
+                        _logger.LogWarning("TXT file does not contain any valid file paths");
+                        System.Windows.MessageBox.Show("TXT file does not contain any valid file paths.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
                 }
-                catch
+                else
                 {
+                    _logger.LogInfo($"Reading JSON file: {jsonFilePath}");
+                    // Читаем JSON файл
+                    var snapshotJson = System.IO.File.ReadAllText(jsonFilePath);
+
+                    // Пробуем разные форматы JSON
                     try
                     {
-                        // Формат 2: Объект с полем Files
-                        var snapshot = Newtonsoft.Json.JsonConvert.DeserializeObject<VortexSnapshot>(snapshotJson);
-                        files = snapshot?.Files;
+                        // Формат 1: Простой массив строк
+                        files = Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(snapshotJson);
                     }
                     catch
                     {
                         try
                         {
-                            // Формат 3: Объект с корневым Files
-                            var snapshotRoot = Newtonsoft.Json.JsonConvert.DeserializeObject<VortexSnapshotRoot>(snapshotJson);
-                            files = snapshotRoot?.Files;
+                            // Формат 2: Объект с полем Files
+                            var snapshot = Newtonsoft.Json.JsonConvert.DeserializeObject<VortexSnapshot>(snapshotJson);
+                            files = snapshot?.Files;
                         }
                         catch
                         {
-                            System.Windows.MessageBox.Show("JSON file has unsupported format.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                            return;
+                            try
+                            {
+                                // Формат 3: Объект с корневым Files
+                                var snapshotRoot = Newtonsoft.Json.JsonConvert.DeserializeObject<VortexSnapshotRoot>(snapshotJson);
+                                files = snapshotRoot?.Files;
+                            }
+                            catch
+                            {
+                                System.Windows.MessageBox.Show("JSON file has unsupported format.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                                return;
+                            }
                         }
                     }
-                }
 
-                if (files == null || files.Count == 0)
-                {
-                    System.Windows.MessageBox.Show("JSON file is empty or invalid.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
+                    if (files == null || files.Count == 0)
+                    {
+                        System.Windows.MessageBox.Show("JSON file is empty or invalid.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
                 }
 
                 // Извлекаем порядок модов из snapshot
@@ -586,8 +628,9 @@ namespace Stalker2ModManager
 
                 UpdateOrders();
                 var fileName = System.IO.Path.GetFileName(jsonFilePath);
-                UpdateStatus($"Sorted {_mods.Count} mods according to {fileName}");
-                _logger.LogSuccess($"Sorted {_mods.Count} mods according to {fileName}. Found {modOrderMap.Count} mods in file");
+                var fileType = System.IO.Path.GetExtension(jsonFilePath).ToLower() == ".txt" ? "TXT" : "JSON";
+                UpdateStatus($"Sorted {_mods.Count} mods according to {fileName} ({fileType})");
+                _logger.LogSuccess($"Sorted {_mods.Count} mods according to {fileName} ({fileType}). Found {modOrderMap.Count} mods in file");
 
                 System.Windows.MessageBox.Show(
                     $"Mods sorted successfully according to {fileName}.\nFound {modOrderMap.Count} mods in file.",

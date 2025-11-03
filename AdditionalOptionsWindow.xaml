@@ -75,13 +75,13 @@
             <!-- Options -->
             <StackPanel Grid.Row="1" Margin="0,0,0,15">
                 <CheckBox x:Name="SortBySnapshotCheckBox" 
-                         Content="Sort mods according to JSON file"
+                         Content="Sort mods according to JSON/TXT file"
                          Margin="0,0,0,10"
                          IsChecked="False"
                          Checked="SortBySnapshotCheckBox_Checked"
                          Unchecked="SortBySnapshotCheckBox_Unchecked"/>
                 <StackPanel Margin="25,0,0,10" Orientation="Horizontal">
-                    <TextBlock Text="JSON file path:" 
+                    <TextBlock Text="File path:" 
                                Foreground="#FF888888"
                                FontSize="11"
                                VerticalAlignment="Center"
@@ -97,7 +97,7 @@
                             Margin="5,0,0,0"
                             Padding="8,5"/>
                 </StackPanel>
-                <TextBlock Text="Select a JSON file (snapshot.json or any file with mod order) to sort mods based on its order."
+                <TextBlock Text="Select a JSON or TXT file (any file with mod order) to sort mods based on its order."
                        Foreground="#FF888888"
                        FontSize="11"
                        TextWrapping="Wrap"
