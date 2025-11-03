@@ -199,3 +199,4 @@ FodyWeavers.xsd
 # mods_config.json
 
 *.ps1
+*.RELEASE_INSTRUCTIONS.*
