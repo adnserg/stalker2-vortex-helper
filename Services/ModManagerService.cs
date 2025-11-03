@@ -71,16 +71,6 @@ namespace Stalker2ModManager.Services
 
                 _logger.LogInfo($"Starting installation. Target: {targetPath}, Total mods: {mods.Count}, Enabled: {mods.Count(m => m.IsEnabled)}");
 
-                // Удаляем ВСЁ из целевой папки перед установкой
-                progress?.Report(new InstallProgress
-                {
-                    CurrentMod = "Cleaning target folder...",
-                    Installed = 0,
-                    Total = 1,
-                    Percentage = 0
-                });
-                _logger.LogInfo("Cleaning target folder...");
-
                 // Список служебных файлов Vortex, которые нужно сохранить
                 var vortexFilesToKeep = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                 {
@@ -90,73 +80,39 @@ namespace Stalker2ModManager.Services
                     "update_deployment.py"
                 };
 
-                // Удаляем ВСЕ папки из целевой папки
-                var existingDirs = Directory.GetDirectories(targetPath);
-                foreach (var dir in existingDirs)
-                {
-                    var dirName = Path.GetFileName(dir);
-                    
-                    try
-                    {
-                        await Task.Run(() =>
-                        {
-                            // Сначала снимаем атрибуты только для чтения, если они есть
-                            var dirInfo = new DirectoryInfo(dir);
-                            RemoveReadOnlyAttributes(dirInfo);
-                            Directory.Delete(dir, true);
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError($"Failed to delete directory: {dir}", ex);
-                        System.Diagnostics.Debug.WriteLine($"Failed to delete directory {dir}: {ex.Message}");
-                        throw new Exception($"Failed to delete directory: {dirName}. Error: {ex.Message}. Make sure the folder is not open in another program.", ex);
-                    }
-                }
-
-                // Удаляем ВСЕ файлы, кроме служебных Vortex
-                var existingFiles = Directory.GetFiles(targetPath);
-                foreach (var file in existingFiles)
-                {
-                    var fileName = Path.GetFileName(file);
-                    
-                    // Пропускаем только служебные файлы Vortex
-                    bool isVortexFile = fileName.StartsWith("vortex.", StringComparison.OrdinalIgnoreCase) ||
-                                       fileName.StartsWith("snapshot_", StringComparison.OrdinalIgnoreCase) ||
-                                       vortexFilesToKeep.Contains(fileName);
-                    
-                    if (isVortexFile)
-                    {
-                        continue;
-                    }
-
-                    try
-                    {
-                        await Task.Run(() =>
-                        {
-                            var fileInfo = new FileInfo(file);
-                            if (fileInfo.Exists)
-                            {
-                                fileInfo.Attributes = FileAttributes.Normal;
-                                File.Delete(file);
-                            }
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError($"Failed to delete file: {file}", ex);
-                        System.Diagnostics.Debug.WriteLine($"Failed to delete file {file}: {ex.Message}");
-                        throw new Exception($"Failed to delete file: {fileName}. Error: {ex.Message}. Make sure the file is not open in another program.", ex);
-                    }
-                }
-
-                // Копируем только включенные моды в правильном порядке
+                // Получаем список включенных модов
                 var enabledMods = mods.Where(m => m.IsEnabled).OrderBy(m => m.Order).ToList();
                 int total = enabledMods.Count;
                 int installed = 0;
 
-                _logger.LogInfo($"Installing {total} enabled mods...");
+                // Сначала собираем список всех файлов, которые должны быть (из включенных модов)
+                var requiredFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var requiredDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                
+                foreach (var mod in enabledMods)
+                {
+                    var targetFolderName = mod.GetTargetFolderName();
+                    var targetModPath = Path.Combine(targetPath, targetFolderName);
+                    requiredDirectories.Add(targetModPath);
+                    
+                    // Собираем все файлы, которые должны быть скопированы из этого мода
+                    CollectFiles(mod.SourcePath, targetModPath, requiredFiles);
+                }
 
+                // Удаляем папки, которых нет в списке включенных модов
+                progress?.Report(new InstallProgress
+                {
+                    CurrentMod = "Cleaning unused mods...",
+                    Installed = 0,
+                    Total = total,
+                    Percentage = 0
+                });
+                
+                await CleanUnusedModsAsync(targetPath, requiredDirectories, vortexFilesToKeep);
+
+                _logger.LogInfo($"Installing {total} enabled mods (only changed files will be copied)...");
+
+                // Копируем включенные моды в правильном порядке, копируя только измененные файлы
                 foreach (var mod in enabledMods)
                 {
                     var targetFolderName = mod.GetTargetFolderName();
@@ -178,12 +134,19 @@ namespace Stalker2ModManager.Services
                         Percentage = percentage
                     });
 
-                    _logger.LogInfo($"Installing mod [{installed}/{total}]: {mod.Name} -> {targetFolderName}");
+                    _logger.LogInfo($"Processing mod [{installed}/{total}]: {mod.Name} -> {targetFolderName}");
 
-                    // Копируем все файлы из исходной папки мода
-                    await CopyDirectoryAsync(mod.SourcePath, targetModPath);
+                    // Копируем только измененные файлы
+                    int copiedCount = await CopyDirectoryAsync(mod.SourcePath, targetModPath, true);
                     
-                    _logger.LogDebug($"Mod '{mod.Name}' copied successfully");
+                    if (copiedCount > 0)
+                    {
+                        _logger.LogDebug($"Mod '{mod.Name}': copied {copiedCount} changed/new files");
+                    }
+                    else
+                    {
+                        _logger.LogDebug($"Mod '{mod.Name}': all files are up to date, skipped");
+                    }
                 }
 
                 _logger.LogSuccess($"Installation completed. Installed {installed} mods");
@@ -195,8 +158,38 @@ namespace Stalker2ModManager.Services
             CopyDirectoryAsync(sourceDir, targetDir).Wait();
         }
 
-        private async Task CopyDirectoryAsync(string sourceDir, string targetDir)
+        private void CollectFiles(string sourceDir, string targetDir, HashSet<string> fileSet)
         {
+            try
+            {
+                if (!Directory.Exists(sourceDir)) return;
+
+                var files = Directory.GetFiles(sourceDir);
+                foreach (var file in files)
+                {
+                    var relativePath = Path.GetRelativePath(sourceDir, file);
+                    var targetFilePath = Path.Combine(targetDir, relativePath);
+                    fileSet.Add(targetFilePath);
+                }
+
+                var dirs = Directory.GetDirectories(sourceDir);
+                foreach (var dir in dirs)
+                {
+                    var dirName = Path.GetFileName(dir);
+                    var targetSubDir = Path.Combine(targetDir, dirName);
+                    CollectFiles(dir, targetSubDir, fileSet);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error collecting files from {sourceDir}: {ex.Message}");
+            }
+        }
+
+        private async Task<int> CopyDirectoryAsync(string sourceDir, string targetDir, bool skipExisting = false)
+        {
+            int copiedCount = 0;
+            
             await Task.Run(async () =>
             {
                 Directory.CreateDirectory(targetDir);
@@ -209,7 +202,18 @@ namespace Stalker2ModManager.Services
                     {
                         var fileName = Path.GetFileName(file);
                         var targetFilePath = Path.Combine(targetDir, fileName);
+                        
+                        // Если нужно пропускать существующие файлы, проверяем их
+                        if (skipExisting && File.Exists(targetFilePath))
+                        {
+                            if (AreFilesIdentical(file, targetFilePath))
+                            {
+                                return; // Файлы идентичны, пропускаем
+                            }
+                        }
+                        
                         File.Copy(file, targetFilePath, true);
+                        copiedCount++;
                     });
                 }
 
@@ -219,7 +223,94 @@ namespace Stalker2ModManager.Services
                 {
                     var dirName = Path.GetFileName(dir);
                     var targetSubDir = Path.Combine(targetDir, dirName);
-                    await CopyDirectoryAsync(dir, targetSubDir);
+                    copiedCount += await CopyDirectoryAsync(dir, targetSubDir, skipExisting);
+                }
+            });
+            
+            return copiedCount;
+        }
+
+        private bool AreFilesIdentical(string sourceFile, string targetFile)
+        {
+            try
+            {
+                var sourceInfo = new FileInfo(sourceFile);
+                var targetInfo = new FileInfo(targetFile);
+                
+                // Сравниваем размер и дату изменения
+                if (sourceInfo.Length != targetInfo.Length)
+                {
+                    return false;
+                }
+                
+                // Если размер совпадает и дата изменения целевого файла новее или равна исходному,
+                // считаем файлы идентичными (для ускорения не проверяем содержимое)
+                // Можно улучшить, добавив проверку хеша, но это будет медленнее
+                return targetInfo.LastWriteTime >= sourceInfo.LastWriteTime;
+            }
+            catch
+            {
+                // При ошибке считаем, что файлы разные и нужно скопировать
+                return false;
+            }
+        }
+
+        private async Task CleanUnusedModsAsync(string targetPath, HashSet<string> requiredDirectories, HashSet<string> vortexFilesToKeep)
+        {
+            await Task.Run(async () =>
+            {
+                // Удаляем папки, которых нет в списке включенных модов
+                var existingDirs = Directory.GetDirectories(targetPath);
+                foreach (var dir in existingDirs)
+                {
+                    if (!requiredDirectories.Contains(dir, StringComparer.OrdinalIgnoreCase))
+                    {
+                        try
+                        {
+                            var dirInfo = new DirectoryInfo(dir);
+                            RemoveReadOnlyAttributes(dirInfo);
+                            await Task.Run(() => Directory.Delete(dir, true));
+                            _logger.LogDebug($"Deleted unused mod directory: {Path.GetFileName(dir)}");
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError($"Failed to delete unused directory: {dir}", ex);
+                        }
+                    }
+                }
+
+                // Удаляем файлы в корне, которых нет в исходных модах (кроме служебных Vortex)
+                var existingFiles = Directory.GetFiles(targetPath);
+                foreach (var file in existingFiles)
+                {
+                    var fileName = Path.GetFileName(file);
+                    
+                    // Пропускаем служебные файлы Vortex
+                    bool isVortexFile = fileName.StartsWith("vortex.", StringComparison.OrdinalIgnoreCase) ||
+                                       fileName.StartsWith("snapshot_", StringComparison.OrdinalIgnoreCase) ||
+                                       vortexFilesToKeep.Contains(fileName);
+                    
+                    if (isVortexFile)
+                    {
+                        continue;
+                    }
+
+                    // Удаляем файл, если его нет в списке требуемых
+                    // (для корневых файлов мы не собираем список, так что удаляем все ненужные)
+                    try
+                    {
+                        var fileInfo = new FileInfo(file);
+                        if (fileInfo.Exists)
+                        {
+                            fileInfo.Attributes = FileAttributes.Normal;
+                            await Task.Run(() => File.Delete(file));
+                            _logger.LogDebug($"Deleted unused file: {fileName}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Failed to delete unused file: {file}", ex);
+                    }
                 }
             });
         }
