@@ -27,6 +27,7 @@ namespace Stalker2ModManager.Models
             {
                 _name = value;
                 OnPropertyChanged(nameof(Name));
+                OnPropertyChanged(nameof(TargetFolderName));
             }
         }
 
@@ -47,7 +48,13 @@ namespace Stalker2ModManager.Models
             {
                 _order = value;
                 OnPropertyChanged(nameof(Order));
+                OnPropertyChanged(nameof(TargetFolderName));
             }
+        }
+
+        public string TargetFolderName
+        {
+            get => GetTargetFolderName();
         }
 
         public string GetTargetFolderName()

@@ -83,7 +83,7 @@ namespace Stalker2ModManager.Services
                 ["MoveDown"] = "↓ Move Down",
                 ["OrderHeader"] = "Order",
                 ["NameHeader"] = "Mod Name",
-                ["TargetFolderHeader"] = "Target Folder",
+                ["TargetFolderHeader"] = "Target Folder (AAA-ModName)",
                 
                 // Status messages
                 ["Status"] = "Ready",
@@ -157,7 +157,7 @@ namespace Stalker2ModManager.Services
                 ["MoveDown"] = "↓ Вниз",
                 ["OrderHeader"] = "Порядок",
                 ["NameHeader"] = "Название мода",
-                ["TargetFolderHeader"] = "Папка назначения",
+                ["TargetFolderHeader"] = "Папка назначения (AAA-ModName)",
                 
                 // Status messages
                 ["Status"] = "Готов",

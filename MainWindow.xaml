@@ -163,21 +163,32 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <Border x:Name="Border" 
-                                    Width="18" Height="18"
-                                    Background="#FF3E3E42"
-                                    BorderBrush="#FF464646"
+                                    Width="20" Height="20"
+                                    Background="Transparent"
+                                    BorderBrush="#FF007ACC"
                                     BorderThickness="2"
-                                    CornerRadius="3"
+                                    CornerRadius="4"
                                     Grid.Column="0"
                                     Margin="0,0,8,0">
-                                <Path x:Name="CheckMark"
-                                      Data="M 0 5 L 5 10 L 13 0"
-                                      Stroke="#FF4CAF50"
-                                      StrokeThickness="2.5"
-                                      Fill="Transparent"
-                                      Visibility="Collapsed"
-                                      HorizontalAlignment="Center"
-                                      VerticalAlignment="Center"/>
+                                <Grid>
+                                    <!-- Зеленая галочка -->
+                                    <Path x:Name="CheckMark"
+                                          Data="M 3 10 L 8 15 L 17 4"
+                                          Stroke="#FF4CAF50"
+                                          StrokeThickness="3"
+                                          Fill="Transparent"
+                                          Visibility="Collapsed"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round"
+                                          StrokeLineJoin="Round">
+                                        <Path.Effect>
+                                            <DropShadowEffect Color="#FF4CAF50" BlurRadius="3" ShadowDepth="0" Opacity="0.6"/>
+                                        </Path.Effect>
+                                    </Path>
+                                    <!-- Крестик для выключенного состояния (необязательно, но можно использовать другую иконку) -->
+                                </Grid>
                             </Border>
                             <ContentPresenter Grid.Column="1" 
                                             Content="{TemplateBinding Content}"/>
@@ -185,11 +196,18 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
-                                <Setter TargetName="Border" Property="Background" Value="#FF4CAF50"/>
-                                <Setter TargetName="Border" Property="BorderBrush" Value="#FF66BB6A"/>
+                                <Setter TargetName="Border" Property="Background" Value="#FF2D4A2E"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#FF4CAF50"/>
+                                <Setter TargetName="Border" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="False">
+                                <Setter TargetName="Border" Property="Background" Value="Transparent"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#FF666666"/>
+                                <Setter TargetName="Border" Property="BorderThickness" Value="2"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Border" Property="BorderBrush" Value="#FF007ACC"/>
+                                <Setter TargetName="Border" Property="BorderThickness" Value="2.5"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -403,11 +421,11 @@
                                               FontSize="12"
                                               Margin="5,0,0,0"
                                               VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Column="3" Text="{Binding GetTargetFolderName(), StringFormat='→ {0}'}" 
-                                              Foreground="#FF888888" 
+                                    <TextBlock Grid.Column="3" Text="{Binding TargetFolderName}" 
+                                              Foreground="#FF4CAF50" 
                                               Margin="5,0,0,0" 
-                                              FontStyle="Italic"
-                                              FontSize="11"
+                                              FontWeight="SemiBold"
+                                              FontSize="12"
                                               VerticalAlignment="Center"/>
                                 </Grid>
                             </DataTemplate>

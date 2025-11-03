@@ -438,6 +438,7 @@ namespace Stalker2ModManager
             for (int i = 0; i < _mods.Count; i++)
             {
                 _mods[i].Order = i;
+                // Свойство TargetFolderName автоматически обновится через OnPropertyChanged в сеттере Order
             }
         }
 
