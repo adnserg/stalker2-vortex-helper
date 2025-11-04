@@ -8,6 +8,9 @@
         Background="#FF1E1E1E" WindowStyle="None" AllowsTransparency="True"
         ResizeMode="CanResize" MinWidth="800" MinHeight="600" WindowStartupLocation="CenterScreen">
     <Window.Resources>
+        <!-- Color Resources -->
+        <SolidColorBrush x:Key="HoverBackgroundBrush" Color="#FF5A5A5A"/>
+        
         <!-- Button Style -->
         <Style TargetType="Button">
             <Setter Property="Background" Value="#FF2D2D30"/>
@@ -33,7 +36,7 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#FF3E3E42"/>
+                    <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
                 </Trigger>
                 <Trigger Property="IsPressed" Value="True">
                     <Setter Property="Background" Value="#FF007ACC"/>
@@ -69,11 +72,11 @@
             <Setter Property="Cursor" Value="Hand"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#FF3E3E42"/>
+                    <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
                     <Setter Property="Foreground" Value="#FFFFFFFF"/>
                 </Trigger>
                 <Trigger Property="IsHighlighted" Value="True">
-                    <Setter Property="Background" Value="#FF3E3E42"/>
+                    <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
                     <Setter Property="Foreground" Value="#FFFFFFFF"/>
                 </Trigger>
             </Style.Triggers>
@@ -99,11 +102,11 @@
             <Setter Property="Foreground" Value="#FFFFFFFF"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#FF3E3E42"/>
+                    <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
                     <Setter Property="Foreground" Value="#FFFFFFFF"/>
                 </Trigger>
                 <Trigger Property="IsHighlighted" Value="True">
-                    <Setter Property="Background" Value="#FF3E3E42"/>
+                    <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
                     <Setter Property="Foreground" Value="Black"/>
                 </Trigger>
             </Style.Triggers>
@@ -123,7 +126,7 @@
 
         <!-- TextBox Style -->
         <Style TargetType="TextBox">
-            <Setter Property="Background" Value="#FF3E3E42"/>
+            <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
             <Setter Property="Foreground" Value="#FFFFFFFF"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="BorderBrush" Value="#FF464646"/>
@@ -220,7 +223,7 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#FF3E3E42"/>
+                    <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -241,7 +244,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Border" Property="Background" Value="#FF3E3E42"/>
+                                <Setter TargetName="Border" Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter TargetName="Border" Property="Background" Value="#FF007ACC"/>
@@ -337,7 +340,7 @@
                                 <Setter Property="BorderBrush" Value="#FF1C97EA"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#FF3E3E42"/>
+                                <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -515,9 +518,9 @@
                 </StackPanel>
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
                     <Button Content="─" Width="40" Height="30" Click="MinimizeWindow_Click" 
-                            Background="#FF2D2D30" Padding="0" Margin="0,0,2,0"/>
+                            Padding="0" Margin="0,0,2,0"/>
                     <Button Content="✕" Width="40" Height="30" Click="CloseWindow_Click"
-                            Background="#FF2D2D30" Padding="0"/>
+                            Padding="0"/>
                 </StackPanel>
             </Grid>
 
@@ -596,7 +599,7 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="🔍" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#FF888888"/>
                                 <TextBox Grid.Column="1" x:Name="SearchModsTextBox" 
-                                         Background="#FF3E3E42" 
+                                         Background="{StaticResource HoverBackgroundBrush}" 
                                          Foreground="#FFFFFFFF"
                                          BorderThickness="1"
                                          BorderBrush="#FF464646"

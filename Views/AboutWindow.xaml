@@ -4,6 +4,47 @@
         Title="About" Height="220" Width="460"
         Background="#FF1E1E1E" WindowStyle="None" AllowsTransparency="True"
         WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+        <!-- Hover color to match main window -->
+        <SolidColorBrush x:Key="HoverBackgroundBrush" Color="#FF5A5A5A"/>
+        <!-- Match main Button style -->
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#FF2D2D30"/>
+            <Setter Property="Foreground" Value="#FFFFFFFF"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="4" 
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"/>
+                            <Border.Effect>
+                                <DropShadowEffect Color="#40000000" BlurRadius="3" ShadowDepth="1"/>
+                            </Border.Effect>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#FF007ACC"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#FF1E1E1E"/>
+                    <Setter Property="Foreground" Value="#FF666666"/>
+                    <Setter Property="Opacity" Value="0.6"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
     <Border BorderBrush="#FF007ACC" BorderThickness="2" CornerRadius="8">
         <Grid Margin="15,15,15,10">
             <Grid.RowDefinitions>
@@ -20,14 +61,14 @@
                 <TextBlock Text="About S.T.A.L.K.E.R. 2 Mod Manager" 
                            FontSize="16" FontWeight="Bold" Foreground="#FFFFFFFF"/>
                 <Button Grid.Column="1" Content="✕" Width="30" Height="30" Click="Close_Click"
-                        Background="#FF2D2D30" Foreground="#FFFFFFFF" Padding="0" Cursor="Hand"/>
+                        Padding="0" Cursor="Hand"/>
             </Grid>
 
             <StackPanel Grid.Row="1" Margin="0,0,0,10">
                 <TextBlock Foreground="#FFD4D4D4" TextWrapping="Wrap" Margin="0,0,0,10">
                     <Run Text="Author: " />
                     <Hyperlink NavigateUri="https://github.com/adnserg" RequestNavigate="Link_RequestNavigate" Cursor="Hand">
-                        <Run Text="https://github.com/adnserg"/>
+                        <Run Text="ADN"/>
                     </Hyperlink>
                 </TextBlock>
                 <TextBlock Foreground="#FFD4D4D4" TextWrapping="Wrap" Margin="0,0,0,10">
@@ -46,7 +87,7 @@
             </StackPanel>
 
             <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Close" Click="Close_Click" Padding="12,6" Background="#FF2D2D30" Foreground="#FFFFFFFF" Cursor="Hand"/>
+                <Button Content="Close" Click="Close_Click" Padding="12,6" Cursor="Hand"/>
             </StackPanel>
         </Grid>
     </Border>

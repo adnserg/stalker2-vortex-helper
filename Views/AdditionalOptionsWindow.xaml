@@ -5,7 +5,9 @@
         Background="#FF1E1E1E" WindowStyle="None" AllowsTransparency="True"
         WindowStartupLocation="CenterOwner">
     <Window.Resources>
-        <!-- Используем стили из MainWindow -->
+        <!-- Hover color to match main window -->
+        <SolidColorBrush x:Key="HoverBackgroundBrush" Color="#FF5A5A5A"/>
+        <!-- Используем стили из MainWindow (выравниваем поведение) -->
         <Style TargetType="Button">
             <Setter Property="Background" Value="#FF2D2D30"/>
             <Setter Property="Foreground" Value="#FFFFFFFF"/>
@@ -30,7 +32,7 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#FF3E3E42"/>
+                    <Setter Property="Background" Value="{StaticResource HoverBackgroundBrush}"/>
                 </Trigger>
                 <Trigger Property="IsPressed" Value="True">
                     <Setter Property="Background" Value="#FF007ACC"/>
@@ -69,7 +71,7 @@
                           Foreground="#FFFFFFFF"
                           VerticalAlignment="Center"/>
                 <Button Grid.Column="1" Content="✕" Width="30" Height="30" Click="Close_Click"
-                        Background="#FF2D2D30" Padding="0"/>
+                        Padding="0"/>
             </Grid>
 
             <!-- Options -->
