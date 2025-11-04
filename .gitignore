@@ -201,3 +201,4 @@ FodyWeavers.xsd
 *.ps1
 *.RELEASE_INSTRUCTIONS.*
 *.7z
+publish/
