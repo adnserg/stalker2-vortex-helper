@@ -73,7 +73,13 @@
     "JsonUnsupportedFormat": "JSON file has unsupported format.",
     "JsonFileEmptyOrInvalid": "JSON file is empty or invalid.",
     "ErrorSortingMods": "Error sorting mods by JSON file",
-    "ModsSortedSuccess": "Mods sorted successfully according to {0}.\nFound {1} mods in file."
+    "ModsSortedSuccess": "Mods sorted successfully according to {0}.\nFound {1} mods in file.",
+    "DownloadUrlNotAvailable": "Download URL is not available.",
+    "FailedToDownloadUpdate": "Failed to download update. Please try again later.",
+    "FailedToExtractUpdate": "Failed to extract update archive. Please try again later.",
+    "FailedToPrepareUpdateInstaller": "Failed to download or prepare update installer. Please check your internet connection and try again.",
+    "FailedToStartUpdateProcess": "Failed to start update process. Please try again later.",
+    "ErrorDuringUpdate": "Error during update: {0}"
   },
   "ru": {
     "WindowTitle": "Менеджер модов S.T.A.L.K.E.R. 2",
@@ -149,7 +155,13 @@
     "JsonUnsupportedFormat": "JSON файл имеет неподдерживаемый формат.",
     "JsonFileEmptyOrInvalid": "JSON файл пуст или недействителен.",
     "ErrorSortingMods": "Ошибка сортировки модов по JSON файлу",
-    "ModsSortedSuccess": "Моды успешно отсортированы согласно {0}.\nНайдено {1} модов в файле."
+    "ModsSortedSuccess": "Моды успешно отсортированы согласно {0}.\nНайдено {1} модов в файле.",
+    "DownloadUrlNotAvailable": "URL для скачивания недоступен.",
+    "FailedToDownloadUpdate": "Не удалось скачать обновление. Попробуйте позже.",
+    "FailedToExtractUpdate": "Не удалось распаковать архив обновления. Попробуйте позже.",
+    "FailedToPrepareUpdateInstaller": "Не удалось скачать или подготовить установщик обновлений. Проверьте подключение к интернету и попробуйте снова.",
+    "FailedToStartUpdateProcess": "Не удалось запустить процесс обновления. Попробуйте позже.",
+    "ErrorDuringUpdate": "Ошибка во время обновления: {0}"
   },
   "fr": {
     "WindowTitle": "Gestionnaire de mods S.T.A.L.K.E.R. 2",

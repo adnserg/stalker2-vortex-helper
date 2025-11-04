@@ -200,7 +200,7 @@ namespace Stalker2ModManager.Views
         {
             if (string.IsNullOrWhiteSpace(VortexPathTextBox.Text))
             {
-                System.Windows.MessageBox.Show(_localization.GetString("SelectVortexPath"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+                WarningWindow.Show(_localization.GetString("SelectVortexPath"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
@@ -252,7 +252,7 @@ namespace Stalker2ModManager.Views
             catch (Exception ex)
             {
                 _logger.LogError("Error loading mods", ex);
-                System.Windows.MessageBox.Show($"{_localization.GetString("ErrorLoadingMods")}: {ex.Message}", _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+                WarningWindow.Show($"{_localization.GetString("ErrorLoadingMods")}: {ex.Message}", _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -275,13 +275,13 @@ namespace Stalker2ModManager.Views
                 _logger.LogInfo($"Mods order saved: {modsOrder.Mods.Count} mods");
 
                 UpdateStatus("Config saved");
-                System.Windows.MessageBox.Show(_localization.GetString("ConfigSavedSuccess"), _localization.GetString("Success"), MessageBoxButton.OK, MessageBoxImage.Information);
+                WarningWindow.Show(_localization.GetString("ConfigSavedSuccess"), _localization.GetString("Success"), MessageBoxButton.OK, MessageBoxImage.Information);
                 _logger.LogSuccess("Config saved successfully");
             }
             catch (Exception ex)
             {
                 _logger.LogError("Error saving config", ex);
-                System.Windows.MessageBox.Show($"{_localization.GetString("ErrorSavingConfig")}: {ex.Message}", _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+                WarningWindow.Show($"{_localization.GetString("ErrorSavingConfig")}: {ex.Message}", _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -351,7 +351,7 @@ namespace Stalker2ModManager.Views
             catch (Exception ex)
             {
                 _logger.LogError("Error loading config", ex);
-                System.Windows.MessageBox.Show($"{_localization.GetString("ErrorLoadingConfig")}: {ex.Message}", _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+                WarningWindow.Show($"{_localization.GetString("ErrorLoadingConfig")}: {ex.Message}", _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -360,13 +360,13 @@ namespace Stalker2ModManager.Views
             // Проверяем, что моды загружены
             if (_mods == null || _mods.Count == 0)
             {
-                System.Windows.MessageBox.Show(_localization.GetString("NoModsLoadedMessage"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
+                WarningWindow.Show(_localization.GetString("NoModsLoadedMessage"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             
             if (string.IsNullOrWhiteSpace(TargetPathTextBox.Text))
             {
-                System.Windows.MessageBox.Show(_localization.GetString("SelectTargetPath"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+                WarningWindow.Show(_localization.GetString("SelectTargetPath"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
@@ -418,12 +418,12 @@ namespace Stalker2ModManager.Views
                 
                 UpdateStatus($"Installed {enabledModsCount} mods");
                 _logger.LogSuccess($"Mods installed successfully. Installed {enabledModsCount} mods to {TargetPathTextBox.Text}");
-                System.Windows.MessageBox.Show(_localization.GetString("ModsInstalledSuccess"), _localization.GetString("Success"), MessageBoxButton.OK, MessageBoxImage.Information);
+                WarningWindow.Show(_localization.GetString("ModsInstalledSuccess"), _localization.GetString("Success"), MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 _logger.LogError("Error installing mods", ex);
-                System.Windows.MessageBox.Show($"{_localization.GetString("ErrorInstallingMods")}: {ex.Message}", _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+                WarningWindow.Show($"{_localization.GetString("ErrorInstallingMods")}: {ex.Message}", _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -451,7 +451,7 @@ namespace Stalker2ModManager.Views
         {
             if (string.IsNullOrWhiteSpace(TargetPathTextBox.Text))
             {
-                System.Windows.MessageBox.Show(_localization.GetString("SelectTargetPath"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+                WarningWindow.Show(_localization.GetString("SelectTargetPath"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
@@ -488,12 +488,12 @@ namespace Stalker2ModManager.Views
                 
                 UpdateStatus("~mods folder cleared");
                 _logger.LogSuccess($"Mods folder cleared successfully: {TargetPathTextBox.Text}");
-                System.Windows.MessageBox.Show(_localization.GetString("ModsFolderClearedSuccess"), _localization.GetString("Success"), MessageBoxButton.OK, MessageBoxImage.Information);
+                WarningWindow.Show(_localization.GetString("ModsFolderClearedSuccess"), _localization.GetString("Success"), MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 _logger.LogError("Error clearing mods folder", ex);
-                System.Windows.MessageBox.Show($"{_localization.GetString("ErrorClearingMods")}: {ex.Message}", _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+                WarningWindow.Show($"{_localization.GetString("ErrorClearingMods")}: {ex.Message}", _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -649,7 +649,7 @@ namespace Stalker2ModManager.Views
             {
                 if (!_mods.Any())
                 {
-                    System.Windows.MessageBox.Show(_localization.GetString("NoModsLoadedMessage"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
+                    WarningWindow.Show(_localization.GetString("NoModsLoadedMessage"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -667,13 +667,13 @@ namespace Stalker2ModManager.Views
                     _configService.SaveModsOrderToFile(modsOrder, dialog.FileName);
                     UpdateStatus($"Mods order exported to {System.IO.Path.GetFileName(dialog.FileName)}");
                     _logger.LogSuccess($"Mods order exported to {dialog.FileName}");
-                    System.Windows.MessageBox.Show(_localization.GetString("OrderExported"), _localization.GetString("Success"), MessageBoxButton.OK, MessageBoxImage.Information);
+                    WarningWindow.Show(_localization.GetString("OrderExported"), _localization.GetString("Success"), MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError("Error exporting order", ex);
-                System.Windows.MessageBox.Show($"{_localization.GetString("ErrorExportingOrder")}: {ex.Message}", _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+                WarningWindow.Show($"{_localization.GetString("ErrorExportingOrder")}: {ex.Message}", _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -683,7 +683,7 @@ namespace Stalker2ModManager.Views
             {
                 if (!_mods.Any())
                 {
-                    System.Windows.MessageBox.Show(_localization.GetString("NoModsLoadedMessage"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
+                    WarningWindow.Show(_localization.GetString("NoModsLoadedMessage"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -703,19 +703,19 @@ namespace Stalker2ModManager.Views
                         ApplyModsOrder(modsOrder);
                         UpdateStatus($"Mods order imported from {System.IO.Path.GetFileName(dialog.FileName)}");
                         _logger.LogSuccess($"Mods order imported from {dialog.FileName}. Applied order for {modsOrder.Mods.Count} mods");
-                        System.Windows.MessageBox.Show(_localization.GetString("OrderImportedSuccess", modsOrder.Mods.Count), _localization.GetString("Success"), MessageBoxButton.OK, MessageBoxImage.Information);
+                        WarningWindow.Show(_localization.GetString("OrderImportedSuccess", modsOrder.Mods.Count), _localization.GetString("Success"), MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                     else
                     {
                         _logger.LogWarning("Imported file does not contain any mods order");
-                        System.Windows.MessageBox.Show(_localization.GetString("NoModsInImportedFile"), _localization.GetString("Warning"), MessageBoxButton.OK, MessageBoxImage.Warning);
+                        WarningWindow.Show(_localization.GetString("NoModsInImportedFile"), _localization.GetString("Warning"), MessageBoxButton.OK, MessageBoxImage.Warning);
                     }
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError("Error importing order", ex);
-                System.Windows.MessageBox.Show($"{_localization.GetString("ErrorImportingOrder")}: {ex.Message}", _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+                WarningWindow.Show($"{_localization.GetString("ErrorImportingOrder")}: {ex.Message}", _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -750,13 +750,13 @@ namespace Stalker2ModManager.Views
             {
                 if (!System.IO.File.Exists(jsonFilePath))
                 {
-                    System.Windows.MessageBox.Show(_localization.GetString("FileNotFound", jsonFilePath), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+                    WarningWindow.Show(_localization.GetString("FileNotFound", jsonFilePath), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
                 if (!_mods.Any())
                 {
-                    System.Windows.MessageBox.Show(_localization.GetString("NoModsLoadedMessage"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
+                    WarningWindow.Show(_localization.GetString("NoModsLoadedMessage"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -793,7 +793,7 @@ namespace Stalker2ModManager.Views
                     if (files.Count == 0)
                     {
                         _logger.LogWarning("TXT file does not contain any valid file paths");
-                        System.Windows.MessageBox.Show(_localization.GetString("TxtFileNoValidPaths"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+                        WarningWindow.Show(_localization.GetString("TxtFileNoValidPaths"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                         return;
                     }
                 }
@@ -827,7 +827,7 @@ namespace Stalker2ModManager.Views
                             }
                             catch
                             {
-                                System.Windows.MessageBox.Show(_localization.GetString("JsonUnsupportedFormat"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+                                WarningWindow.Show(_localization.GetString("JsonUnsupportedFormat"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                                 return;
                             }
                         }
@@ -835,7 +835,7 @@ namespace Stalker2ModManager.Views
 
                     if (files == null || files.Count == 0)
                     {
-                        System.Windows.MessageBox.Show(_localization.GetString("JsonFileEmptyOrInvalid"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+                        WarningWindow.Show(_localization.GetString("JsonFileEmptyOrInvalid"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                         return;
                     }
                 }
@@ -1078,7 +1078,7 @@ namespace Stalker2ModManager.Views
                 UpdateStatus($"Sorted {_mods.Count} mods according to {fileName} ({fileType})");
                 _logger.LogSuccess($"Sorted {_mods.Count} mods according to {fileName} ({fileType}). Found {modOrderList.Count} mods in file");
 
-                System.Windows.MessageBox.Show(
+                WarningWindow.Show(
                     _localization.GetString("ModsSortedSuccess", fileName, modOrderList.Count),
                     _localization.GetString("Success"),
                     MessageBoxButton.OK,
@@ -1087,7 +1087,7 @@ namespace Stalker2ModManager.Views
             catch (Exception ex)
             {
                 _logger.LogError("Error sorting mods by JSON file", ex);
-                System.Windows.MessageBox.Show($"{_localization.GetString("ErrorSortingMods")}: {ex.Message}", _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+                WarningWindow.Show($"{_localization.GetString("ErrorSortingMods")}: {ex.Message}", _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

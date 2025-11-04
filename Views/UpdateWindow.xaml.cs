@@ -48,7 +48,8 @@ namespace Stalker2ModManager.Views
         {
             if (string.IsNullOrEmpty(_downloadUrl))
             {
-                MessageBox.Show("Download URL is not available.", "Error", 
+                var localization = LocalizationService.Instance;
+                WarningWindow.Show(localization.GetString("DownloadUrlNotAvailable"), localization.GetString("Error"), 
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -77,7 +78,8 @@ namespace Stalker2ModManager.Views
                 
                 if (!downloadSuccess)
                 {
-                    MessageBox.Show("Failed to download update. Please try again later.", "Error", 
+                    var localization = LocalizationService.Instance;
+                    WarningWindow.Show(localization.GetString("FailedToDownloadUpdate"), localization.GetString("Error"), 
                         MessageBoxButton.OK, MessageBoxImage.Error);
                     ResetUI();
                     return;
@@ -91,7 +93,8 @@ namespace Stalker2ModManager.Views
                 
                 if (!extractSuccess)
                 {
-                    MessageBox.Show("Failed to extract update archive. Please try again later.", "Error", 
+                    var localization = LocalizationService.Instance;
+                    WarningWindow.Show(localization.GetString("FailedToExtractUpdate"), localization.GetString("Error"), 
                         MessageBoxButton.OK, MessageBoxImage.Error);
                     ResetUI();
                     return;
@@ -112,7 +115,8 @@ namespace Stalker2ModManager.Views
                 
                 if (!scriptSuccess)
                 {
-                    MessageBox.Show("Failed to download or prepare update installer. Please check your internet connection and try again.", "Error", 
+                    var localization = LocalizationService.Instance;
+                    WarningWindow.Show(localization.GetString("FailedToPrepareUpdateInstaller"), localization.GetString("Error"), 
                         MessageBoxButton.OK, MessageBoxImage.Error);
                     ResetUI();
                     return;
@@ -126,7 +130,8 @@ namespace Stalker2ModManager.Views
                 
                 if (!startSuccess)
                 {
-                    MessageBox.Show("Failed to start update process. Please try again later.", "Error", 
+                    var localization = LocalizationService.Instance;
+                    WarningWindow.Show(localization.GetString("FailedToStartUpdateProcess"), localization.GetString("Error"), 
                         MessageBoxButton.OK, MessageBoxImage.Error);
                     ResetUI();
                     return;
@@ -138,7 +143,8 @@ namespace Stalker2ModManager.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error during update: {ex.Message}", "Error", 
+                var localization = LocalizationService.Instance;
+                WarningWindow.Show(localization.GetString("ErrorDuringUpdate", ex.Message), localization.GetString("Error"), 
                     MessageBoxButton.OK, MessageBoxImage.Error);
                 ResetUI();
             }

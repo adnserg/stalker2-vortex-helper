@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using System.Windows.Forms;
+using Stalker2ModManager.Services;
 
 namespace Stalker2ModManager.Views
 {
@@ -60,7 +61,8 @@ namespace Stalker2ModManager.Views
 
             if (SortBySnapshot && string.IsNullOrWhiteSpace(JsonFilePath))
             {
-                System.Windows.MessageBox.Show("Please select a JSON or TXT file first.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                var localization = LocalizationService.Instance;
+                WarningWindow.Show(localization.GetString("SelectFile"), localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
