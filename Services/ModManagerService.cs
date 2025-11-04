@@ -341,6 +341,78 @@ namespace Stalker2ModManager.Services
             }
         }
 
+        public async Task ClearModsFolderAsync(string targetPath)
+        {
+            if (string.IsNullOrWhiteSpace(targetPath) || !Directory.Exists(targetPath))
+            {
+                _logger.LogWarning($"Cannot clear mods folder: path is empty or does not exist: {targetPath}");
+                return;
+            }
+
+            await Task.Run(async () =>
+            {
+                try
+                {
+                    _logger.LogInfo($"Clearing mods folder: {targetPath}");
+
+                    // Удаляем все папки
+                    var existingDirs = Directory.GetDirectories(targetPath);
+                    foreach (var dir in existingDirs)
+                    {
+                        try
+                        {
+                            var dirInfo = new DirectoryInfo(dir);
+                            RemoveReadOnlyAttributes(dirInfo);
+                            await Task.Run(() => Directory.Delete(dir, true));
+                            _logger.LogDebug($"Deleted directory: {Path.GetFileName(dir)}");
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError($"Failed to delete directory: {dir}", ex);
+                        }
+                    }
+
+                    // Удаляем все файлы (кроме служебных Vortex)
+                    var existingFiles = Directory.GetFiles(targetPath);
+                    foreach (var file in existingFiles)
+                    {
+                        var fileName = Path.GetFileName(file);
+                        
+                        // Пропускаем служебные файлы Vortex
+                        bool isVortexFile = fileName.StartsWith("vortex.", StringComparison.OrdinalIgnoreCase) ||
+                                           fileName.StartsWith("snapshot_", StringComparison.OrdinalIgnoreCase);
+                        
+                        if (isVortexFile)
+                        {
+                            continue;
+                        }
+
+                        try
+                        {
+                            var fileInfo = new FileInfo(file);
+                            if (fileInfo.Exists)
+                            {
+                                fileInfo.Attributes = FileAttributes.Normal;
+                                await Task.Run(() => File.Delete(file));
+                                _logger.LogDebug($"Deleted file: {fileName}");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError($"Failed to delete file: {file}", ex);
+                        }
+                    }
+
+                    _logger.LogSuccess($"Mods folder cleared successfully: {targetPath}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Error clearing mods folder: {targetPath}", ex);
+                    throw;
+                }
+            });
+        }
+
         public string GetDefaultTargetPath()
         {
             // Ищем установку S.T.A.L.K.E.R. 2 в стандартных местах Steam

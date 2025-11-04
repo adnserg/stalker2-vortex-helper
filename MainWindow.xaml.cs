@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Forms;
 using System.Windows.Interop;
@@ -22,6 +23,7 @@ namespace Stalker2ModManager
         private readonly Services.Logger _logger;
         private readonly Services.LocalizationService _localization;
         private ObservableCollection<ModInfo> _mods;
+        private System.Windows.Data.CollectionViewSource _modsViewSource;
         private ModInfo _draggedMod;
         private Point _dragStartPoint;
         private System.Windows.Threading.DispatcherTimer _scrollTimer;
@@ -36,7 +38,10 @@ namespace Stalker2ModManager
             _logger = Services.Logger.Instance;
             _localization = Services.LocalizationService.Instance;
             _mods = new ObservableCollection<ModInfo>();
-            ModsListBox.ItemsSource = _mods;
+            _modsViewSource = new System.Windows.Data.CollectionViewSource();
+            _modsViewSource.Source = _mods;
+            _modsViewSource.Filter += ModsViewSource_Filter;
+            ModsListBox.ItemsSource = _modsViewSource.View;
 
             _logger.LogInfo("Application started");
             
@@ -358,12 +363,12 @@ namespace Stalker2ModManager
                 return;
             }
 
-            // Блокируем кнопку установки
-            var installButton = sender as System.Windows.Controls.Button;
-            if (installButton != null)
+            // Блокируем пункт меню установки
+            var installMenuItem = sender as System.Windows.Controls.MenuItem;
+            if (installMenuItem != null)
             {
-                installButton.IsEnabled = false;
-                installButton.Content = "Installing...";
+                installMenuItem.IsEnabled = false;
+                installMenuItem.Header = "Installing...";
             }
 
             // Показываем прогресс-бар
@@ -396,11 +401,11 @@ namespace Stalker2ModManager
             }
             finally
             {
-                // Восстанавливаем кнопку
-                if (installButton != null)
+                // Восстанавливаем пункт меню
+                if (installMenuItem != null)
                 {
-                    installButton.IsEnabled = true;
-                    installButton.Content = "Install Mods";
+                    installMenuItem.IsEnabled = true;
+                    installMenuItem.Header = "_Install Mods";
                 }
 
                 // Скрываем прогресс-бар
@@ -408,6 +413,102 @@ namespace Stalker2ModManager
                 ProgressBar.Value = 0;
                 ProgressTextBlock.Text = "";
             }
+        }
+
+        private async void ClearMods_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(TargetPathTextBox.Text))
+            {
+                System.Windows.MessageBox.Show("Please select target path first.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            var result = System.Windows.MessageBox.Show(
+                "This will DELETE ALL files and folders in ~mods folder (except Vortex service files). Continue?",
+                "Warning",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
+            // Блокируем пункт меню
+            var clearMenuItem = sender as System.Windows.Controls.MenuItem;
+            if (clearMenuItem != null)
+            {
+                clearMenuItem.IsEnabled = false;
+                clearMenuItem.Header = "Clearing...";
+            }
+
+            // Показываем прогресс-бар
+            ProgressBar.Visibility = Visibility.Visible;
+            ProgressBar.Value = 0;
+            ProgressTextBlock.Text = "Clearing ~mods folder...";
+            UpdateStatus("Clearing ~mods folder...");
+
+            try
+            {
+                _logger.LogInfo($"Starting to clear mods folder: {TargetPathTextBox.Text}");
+                
+                await _modManagerService.ClearModsFolderAsync(TargetPathTextBox.Text);
+                
+                UpdateStatus("~mods folder cleared");
+                _logger.LogSuccess($"Mods folder cleared successfully: {TargetPathTextBox.Text}");
+                System.Windows.MessageBox.Show("~mods folder cleared successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error clearing mods folder", ex);
+                System.Windows.MessageBox.Show($"Error clearing mods folder: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                // Восстанавливаем пункт меню
+                if (clearMenuItem != null)
+                {
+                    clearMenuItem.IsEnabled = true;
+                    clearMenuItem.Header = "_Clear ~mods Folder";
+                }
+
+                // Скрываем прогресс-бар
+                ProgressBar.Visibility = Visibility.Collapsed;
+                ProgressBar.Value = 0;
+                ProgressTextBlock.Text = "";
+            }
+        }
+
+        private void ModsViewSource_Filter(object sender, System.Windows.Data.FilterEventArgs e)
+        {
+            if (e.Item is ModInfo mod)
+            {
+                string searchText = string.Empty;
+                if (SearchModsTextBox != null && !string.IsNullOrEmpty(SearchModsTextBox.Text))
+                {
+                    searchText = SearchModsTextBox.Text.Trim();
+                }
+                
+                if (string.IsNullOrEmpty(searchText))
+                {
+                    e.Accepted = true;
+                }
+                else
+                {
+                    string searchLower = searchText.ToLowerInvariant();
+                    e.Accepted = mod.Name.ToLowerInvariant().Contains(searchLower) ||
+                                 mod.TargetFolderName.ToLowerInvariant().Contains(searchLower);
+                }
+            }
+            else
+            {
+                e.Accepted = false;
+            }
+        }
+
+        private void SearchModsTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            _modsViewSource?.View?.Refresh();
         }
 
         private void MoveUp_Click(object sender, RoutedEventArgs e)
@@ -1398,14 +1499,15 @@ namespace Stalker2ModManager
                 BrowseVortexButton.Content = _localization.GetString("Browse");
                 BrowseTargetButton.Content = _localization.GetString("Browse");
                 
-                // Action buttons
-                LoadModsButton.Content = _localization.GetString("LoadMods");
-                SaveConfigButton.Content = _localization.GetString("SaveConfig");
-                LoadConfigButton.Content = _localization.GetString("LoadConfig");
-                ExportOrderButton.Content = _localization.GetString("ExportOrder");
-                ImportOrderButton.Content = _localization.GetString("ImportOrder");
-                AdvancedButton.Content = _localization.GetString("Advanced");
-                InstallModsButton.Content = _localization.GetString("InstallMods");
+                // Action menu items
+                LoadModsMenuItem.Header = _localization.GetString("LoadMods");
+                SaveConfigMenuItem.Header = _localization.GetString("SaveConfig");
+                LoadConfigMenuItem.Header = _localization.GetString("LoadConfig");
+                ExportOrderMenuItem.Header = _localization.GetString("ExportOrder");
+                ImportOrderMenuItem.Header = _localization.GetString("ImportOrder");
+                AdvancedMenuItem.Header = _localization.GetString("Advanced");
+                InstallModsMenuItem.Header = _localization.GetString("InstallMods");
+                ClearModsMenuItem.Header = _localization.GetString("ClearMods");
                 
                 // Mods GroupBox
                 ModsGroupBox.Header = _localization.GetString("Mods");
