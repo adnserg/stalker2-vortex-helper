@@ -74,7 +74,22 @@ namespace UpdateInstaller
                     return;
                 }
 
-                var appExePath = Path.Combine(_appDirectory, _appExeName);
+                // Убеждаемся, что имя файла имеет расширение .exe
+                var appExeNameFixed = _appExeName;
+                if (appExeNameFixed.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Заменяем .dll на .exe
+                    appExeNameFixed = Path.GetFileNameWithoutExtension(appExeNameFixed) + ".exe";
+                    _logger.LogInfo($"Fixed exe name: {_appExeName} -> {appExeNameFixed}");
+                }
+                else if (!appExeNameFixed.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Если нет расширения, добавляем .exe
+                    appExeNameFixed = appExeNameFixed + ".exe";
+                    _logger.LogInfo($"Added .exe extension: {_appExeName} -> {appExeNameFixed}");
+                }
+                
+                var appExePath = Path.Combine(_appDirectory, appExeNameFixed);
                 if (!File.Exists(appExePath))
                 {
                     _logger.LogError($"Application executable not found: {appExePath}");
@@ -82,74 +97,102 @@ namespace UpdateInstaller
                     return;
                 }
                 
+                _logger.LogInfo($"Using executable path: {appExePath}");
+                
                 _logger.LogSuccess("All validation checks passed");
 
-                // Ждем закрытия приложения
-                _logger.LogInfo($"Waiting for application '{_appExeName}' to close (timeout: {_waitTimeout}s)");
+                // Закрываем приложение
+                // Используем правильное имя процесса (без расширения .dll)
+                var processName = Path.GetFileNameWithoutExtension(appExeNameFixed);
+                _logger.LogInfo($"Closing application '{processName}'...");
                 
                 UpdateUI(() =>
                 {
-                    StatusTextBlock.Text = "Waiting for application to close...";
+                    StatusTextBlock.Text = "Closing application...";
                     ProgressBar.Value = 0;
                     ProgressTextBlock.Text = "0%";
-                    DetailsTextBlock.Text = $"Waiting for {_appExeName} to close...";
+                    DetailsTextBlock.Text = $"Closing {processName}...";
                 });
 
-                var startTime = DateTime.Now;
-                var processFound = false;
-                var processName = Path.GetFileNameWithoutExtension(_appExeName);
-
-                while ((DateTime.Now - startTime).TotalSeconds < _waitTimeout)
+                var processes = Process.GetProcessesByName(processName);
+                if (processes.Length > 0)
                 {
-                    var processes = Process.GetProcessesByName(processName);
-                    if (processes.Length == 0)
+                    _logger.LogInfo($"Found {processes.Length} process(es) to close");
+                    
+                    foreach (var process in processes)
                     {
-                        if (processFound)
+                        try
                         {
-                            var elapsed = (int)(DateTime.Now - startTime).TotalSeconds;
-                            _logger.LogSuccess($"Application closed after {elapsed} seconds");
-                            UpdateUI(() =>
+                            _logger.LogInfo($"Closing process {process.Id} ({process.ProcessName})");
+                            process.CloseMainWindow();
+                            
+                            // Ждем немного для корректного закрытия
+                            if (!process.WaitForExit(2000))
                             {
-                                StatusTextBlock.Text = "Application closed.";
-                                ProgressBar.Value = 10;
-                                DetailsTextBlock.Text = "Proceeding with update...";
-                            });
-                            await Task.Delay(500);
-                            break;
+                                // Если не закрылось за 2 секунды, убиваем принудительно
+                                _logger.LogWarning($"Process {process.Id} did not close gracefully, killing it");
+                                process.Kill();
+                                process.WaitForExit(1000);
+                            }
+                            
+                            _logger.LogSuccess($"Process {process.Id} closed successfully");
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError($"Error closing process {process.Id}", ex);
+                            try
+                            {
+                                process.Kill();
+                                process.WaitForExit(1000);
+                                _logger.LogInfo($"Process {process.Id} killed forcefully");
+                            }
+                            catch (Exception killEx)
+                            {
+                                _logger.LogError($"Failed to kill process {process.Id}", killEx);
+                            }
+                        }
+                        finally
+                        {
+                            process?.Dispose();
                         }
                     }
-                    else
-                    {
-                        processFound = true;
-                        var elapsed = (int)(DateTime.Now - startTime).TotalSeconds;
-                        var remaining = Math.Max(0, _waitTimeout - elapsed);
-                        UpdateUI(() =>
-                        {
-                            DetailsTextBlock.Text = $"Application is still running. Waiting... ({remaining}s remaining)";
-                        });
-                    }
-
+                    
+                    // Даем немного времени системе
                     await Task.Delay(500);
-                }
-
-                if (processFound)
-                {
-                    var processes = Process.GetProcessesByName(processName);
-                    if (processes.Length > 0)
+                    
+                    // Проверяем, что все процессы закрыты
+                    var remainingProcesses = Process.GetProcessesByName(processName);
+                    if (remainingProcesses.Length > 0)
                     {
-                        UpdateUI(() =>
+                        _logger.LogWarning($"Still {remainingProcesses.Length} process(es) running, attempting to kill them");
+                        foreach (var proc in remainingProcesses)
                         {
-                            StatusTextBlock.Text = "Warning: Application is still running";
-                            DetailsTextBlock.Text = "Proceeding with update anyway...";
-                        });
-                        await Task.Delay(1000);
+                            try
+                            {
+                                proc.Kill();
+                                proc.WaitForExit(1000);
+                                proc.Dispose();
+                            }
+                            catch { }
+                        }
                     }
+                    
+                    _logger.LogSuccess("Application closed successfully");
+                    UpdateUI(() =>
+                    {
+                        StatusTextBlock.Text = "Application closed.";
+                        ProgressBar.Value = 10;
+                        DetailsTextBlock.Text = "Proceeding with update...";
+                    });
+                    await Task.Delay(500);
                 }
                 else
                 {
+                    _logger.LogInfo("Application is not running");
                     UpdateUI(() =>
                     {
                         StatusTextBlock.Text = "Application is not running.";
+                        ProgressBar.Value = 10;
                         DetailsTextBlock.Text = "Proceeding with update...";
                     });
                     await Task.Delay(500);

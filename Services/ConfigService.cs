@@ -7,7 +7,7 @@ namespace Stalker2ModManager.Services
 {
     public class ConfigService
     {
-        private readonly string _pathsConfigPath = "paths_config.json";
+        private readonly string _pathsConfigPath = "config.json";
         private readonly string _modsOrderPath = "mods_order.json";
 
         // Загрузка и сохранение путей (Vortex и Target)
@@ -126,6 +126,28 @@ namespace Stalker2ModManager.Services
         {
             config = new ModConfig();
             order = new ModOrder();
+            
+            // Проверяем старый формат paths_config.json и переименовываем
+            const string oldPathsConfigPath = "paths_config.json";
+            if (File.Exists(oldPathsConfigPath))
+            {
+                try
+                {
+                    var json = File.ReadAllText(oldPathsConfigPath);
+                    var oldConfig = JsonConvert.DeserializeObject<ModConfig>(json);
+                    if (oldConfig != null)
+                    {
+                        config = oldConfig;
+                        // Переименовываем старый файл в новый
+                        File.Move(oldPathsConfigPath, _pathsConfigPath);
+                        return true;
+                    }
+                }
+                catch
+                {
+                    // Игнорируем ошибки
+                }
+            }
             
             const string legacyConfigPath = "mods_config.json";
             if (!File.Exists(legacyConfigPath))

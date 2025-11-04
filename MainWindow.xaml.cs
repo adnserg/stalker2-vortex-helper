@@ -39,6 +39,10 @@ namespace Stalker2ModManager
             ModsListBox.ItemsSource = _mods;
 
             _logger.LogInfo("Application started");
+            
+            // Загружаем и отображаем версию
+            LoadVersion();
+            
             LoadConfig();
             
             // Подписываемся на изменение языка
@@ -274,7 +278,7 @@ namespace Stalker2ModManager
             try
             {
                 // Проверяем, есть ли файлы конфигов
-                bool hasPathsConfig = System.IO.File.Exists("paths_config.json");
+                bool hasPathsConfig = System.IO.File.Exists("config.json");
                 bool hasModsOrder = System.IO.File.Exists("mods_order.json");
                 bool hasLegacyConfig = System.IO.File.Exists("mods_config.json");
 
@@ -1342,6 +1346,34 @@ namespace Stalker2ModManager
         private void Localization_LanguageChanged(object sender, EventArgs e)
         {
             UpdateLocalization();
+        }
+
+        private void LoadVersion()
+        {
+            try
+            {
+                var updateService = new Services.UpdateService();
+                var version = updateService.GetCurrentVersion();
+                if (VersionTextBlock != null)
+                {
+                    VersionTextBlock.Text = $"v{version}";
+                    VersionTextBlock.Visibility = Visibility.Visible;
+                    _logger.LogDebug($"Application version loaded: {version}");
+                }
+                else
+                {
+                    _logger.LogWarning("VersionTextBlock is null");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Failed to load version", ex);
+                if (VersionTextBlock != null)
+                {
+                    VersionTextBlock.Text = "v1.0.0";
+                    VersionTextBlock.Visibility = Visibility.Visible;
+                }
+            }
         }
 
         private void UpdateLocalization()

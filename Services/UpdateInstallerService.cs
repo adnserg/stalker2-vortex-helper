@@ -224,7 +224,21 @@ namespace Stalker2ModManager.Services
             {
                 var appPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
                 var appDirectory = Path.GetDirectoryName(appPath);
+                
+                // Определяем имя exe файла
+                // В режиме отладки может быть .dll, но нам нужно .exe
                 var appExeName = Path.GetFileName(appPath);
+                if (appExeName.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Заменяем .dll на .exe
+                    appExeName = Path.GetFileNameWithoutExtension(appExeName) + ".exe";
+                }
+                else if (!appExeName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Если нет расширения, добавляем .exe
+                    appExeName = appExeName + ".exe";
+                }
+                
                 var updaterExePath = Path.Combine(appDirectory, _updaterExeName);
                 
                 if (!File.Exists(updaterExePath))

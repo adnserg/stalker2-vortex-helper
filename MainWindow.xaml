@@ -465,15 +465,30 @@
                                     Visibility="Collapsed"/>
                     </Grid>
                 </StatusBar>
-                <TextBlock x:Name="ProgressTextBlock" 
-                          Grid.Row="1" 
-                          Foreground="#FF888888" 
-                          FontSize="11" 
-                          Margin="0,5,0,0"
-                          Text="" 
-                          HorizontalAlignment="Left"/>
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="ProgressTextBlock" 
+                              Grid.Column="0"
+                              Foreground="#FF888888" 
+                              FontSize="11" 
+                              Margin="0,5,0,0"
+                              Text="" 
+                              HorizontalAlignment="Left"/>
+                    <TextBlock x:Name="VersionTextBlock" 
+                              Grid.Column="1"
+                              Text="v1.0.0" 
+                              FontSize="10" 
+                              Foreground="#FF666666"
+                              Margin="0,5,20,0"
+                              HorizontalAlignment="Right"
+                              VerticalAlignment="Top"
+                              Visibility="Visible"/>
                 </Grid>
             </Grid>
+        </Grid>
         </Grid>
         </AdornerDecorator>
     </Border>
