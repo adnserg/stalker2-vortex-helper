@@ -202,3 +202,4 @@ FodyWeavers.xsd
 *.RELEASE_INSTRUCTIONS.*
 *.7z
 publish/
+/HerbatasDLCModLoader
