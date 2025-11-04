@@ -8,9 +8,30 @@ namespace Stalker2ModManager.Views
 {
     public partial class DlcModLoaderWindow : Window
     {
+        private readonly LocalizationService _localization;
+
         public DlcModLoaderWindow()
         {
             InitializeComponent();
+            _localization = LocalizationService.Instance;
+            _localization.LanguageChanged += Localization_LanguageChanged;
+            UpdateLocalization();
+        }
+
+        private void Localization_LanguageChanged(object sender, System.EventArgs e)
+        {
+            UpdateLocalization();
+        }
+
+        private void UpdateLocalization()
+        {
+            Title = _localization.GetString("DlcModLoaderTitle");
+            TitleTextBlock.Text = _localization.GetString("DlcModLoaderTitle");
+            DescriptionTextBlock.Text = _localization.GetString("DlcModLoaderDescription");
+            RunButton.Content = _localization.GetString("DlcModLoaderRun");
+            AuthorLabelRun.Text = _localization.GetString("DlcModLoaderAuthor");
+            GitHubButton.ToolTip = _localization.GetString("DlcModLoaderGitHubTooltip");
+            NexusModsButton.ToolTip = _localization.GetString("DlcModLoaderNexusTooltip");
         }
 
         private void TitleBar_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -36,16 +57,16 @@ namespace Stalker2ModManager.Views
 
                 if (result.Success)
                 {
-                    WarningWindow.Show($"PAK created/copied to:\n{result.Message}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    WarningWindow.Show($"PAK created/copied to:\n{result.Message}", _localization.GetString("Success"), MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 else
                 {
-                    WarningWindow.Show(result.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    WarningWindow.Show(result.Message, _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
             {
-                WarningWindow.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                WarningWindow.Show(ex.Message, _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

@@ -1708,8 +1708,10 @@ namespace Stalker2ModManager.Views
                 SettingsMenuItem.Header = "_" + _localization.GetString("Settings");
                 LoadCustomLocalizationMenuItem.Header = "_" + _localization.GetString("LoadCustomLocalization");
                 ResetLocalizationMenuItem.Header = "_" + _localization.GetString("ResetLocalization");
+                AboutMenuItem.Header = "_" + _localization.GetString("About");
                 InstallModsMenuItem.Header = _localization.GetString("InstallMods");
                 ClearModsMenuItem.Header = "_" + _localization.GetString("ClearMods");
+                DlcModLoaderMenuItem.Header = "_" + _localization.GetString("DlcModLoader");
                 
                 // Mods GroupBox
                 ModsGroupBox.Header = _localization.GetString("Mods");

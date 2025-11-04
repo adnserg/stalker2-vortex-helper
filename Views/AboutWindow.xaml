@@ -58,27 +58,27 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="About S.T.A.L.K.E.R. 2 Mod Manager" 
+                <TextBlock x:Name="AboutTitleTextBlock" Text="About S.T.A.L.K.E.R. 2 Mod Manager" 
                            FontSize="16" FontWeight="Bold" Foreground="#FFFFFFFF"/>
                 <Button Grid.Column="1" Content="✕" Width="30" Height="30" Click="Close_Click"
                         Padding="0" Cursor="Hand"/>
             </Grid>
 
             <StackPanel Grid.Row="1" Margin="0,0,0,10">
-                <TextBlock Foreground="#FFD4D4D4" TextWrapping="Wrap" Margin="0,0,0,10">
-                    <Run Text="Author: " />
+                <TextBlock x:Name="AuthorTextBlock" Foreground="#FFD4D4D4" TextWrapping="Wrap" Margin="0,0,0,10">
+                    <Run x:Name="AuthorLabelRun" Text="Author: " />
                     <Hyperlink NavigateUri="https://github.com/adnserg" RequestNavigate="Link_RequestNavigate" Cursor="Hand">
-                        <Run Text="ADN"/>
+                        <Run Text="https://github.com/adnserg"/>
                     </Hyperlink>
                 </TextBlock>
-                <TextBlock Foreground="#FFD4D4D4" TextWrapping="Wrap" Margin="0,0,0,10">
-                    <Run Text="Repository: " />
+                <TextBlock x:Name="RepositoryTextBlock" Foreground="#FFD4D4D4" TextWrapping="Wrap" Margin="0,0,0,10">
+                    <Run x:Name="RepositoryLabelRun" Text="Repository: " />
                     <Hyperlink NavigateUri="https://github.com/adnserg/stalker2-vortex-helper/" RequestNavigate="Link_RequestNavigate" Cursor="Hand">
                         <Run Text="https://github.com/adnserg/stalker2-vortex-helper/"/>
                     </Hyperlink>
                 </TextBlock>
-                <TextBlock Foreground="#FF888888" FontSize="11" TextWrapping="Wrap">
-                    <Run Text="Thanks to Herbata for the DLC Mod Loader concept (GitHub: " />
+                <TextBlock x:Name="ThanksTextBlock" Foreground="#FF888888" FontSize="11" TextWrapping="Wrap">
+                    <Run x:Name="ThanksRun" Text="Thanks to Herbata for the DLC Mod Loader concept (GitHub: " />
                     <Hyperlink NavigateUri="https://github.com/herbatka" RequestNavigate="Link_RequestNavigate" Cursor="Hand">
                         <Run Text="herbatka"/>
                     </Hyperlink>
@@ -87,7 +87,7 @@
             </StackPanel>
 
             <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Close" Click="Close_Click" Padding="12,6" Cursor="Hand"/>
+                <Button x:Name="CloseButton" Content="Close" Click="Close_Click" Padding="12,6" Cursor="Hand"/>
             </StackPanel>
         </Grid>
     </Border>

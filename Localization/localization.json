@@ -82,13 +82,25 @@
     "FailedToExtractUpdate": "Failed to extract update archive. Please try again later.",
     "FailedToPrepareUpdateInstaller": "Failed to download or prepare update installer. Please check your internet connection and try again.",
     "FailedToStartUpdateProcess": "Failed to start update process. Please try again later.",
-    "ErrorDuringUpdate": "Error during update: {0}"
+    "ErrorDuringUpdate": "Error during update: {0}",
+    "About": "About",
+    "AboutWindowTitle": "About S.T.A.L.K.E.R. 2 Mod Manager",
+    "AboutAuthor": "Author: ",
+    "AboutRepository": "Repository: ",
+    "AboutThanks": "Thanks to Herbata for the DLC Mod Loader concept (GitHub: ",
+    "DlcModLoader": "DLC Mod Loader",
+    "DlcModLoaderTitle": "Herbata's Mod as DLC Loader",
+    "DlcModLoaderDescription": "Load mods as DLCs",
+    "DlcModLoaderRun": "Run",
+    "DlcModLoaderAuthor": "Author: ",
+    "DlcModLoaderGitHubTooltip": "GitHub Repository",
+    "DlcModLoaderNexusTooltip": "Nexus Mods"
   },
   "ru": {
     "WindowTitle": "Менеджер модов S.T.A.L.K.E.R. 2",
     "Paths": "Пути",
     "VortexPath": "Путь к Vortex:",
-    "TargetPath": "Путь к ~mods:",
+    "TargetPath": "Путь к stalker2:",
     "Browse": "Обзор...",
     "File": "Файл",
     "Order": "Порядок",
@@ -167,7 +179,19 @@
     "FailedToExtractUpdate": "Не удалось распаковать архив обновления. Попробуйте позже.",
     "FailedToPrepareUpdateInstaller": "Не удалось скачать или подготовить установщик обновлений. Проверьте подключение к интернету и попробуйте снова.",
     "FailedToStartUpdateProcess": "Не удалось запустить процесс обновления. Попробуйте позже.",
-    "ErrorDuringUpdate": "Ошибка во время обновления: {0}"
+    "ErrorDuringUpdate": "Ошибка во время обновления: {0}",
+    "About": "О программе",
+    "AboutWindowTitle": "О программе S.T.A.L.K.E.R. 2 Mod Manager",
+    "AboutAuthor": "Автор: ",
+    "AboutRepository": "Репозиторий: ",
+    "AboutThanks": "Благодарность Herbata за концепцию DLC Mod Loader (GitHub: ",
+    "DlcModLoader": "DLC Mod Loader",
+    "DlcModLoaderTitle": "Herbata's Mod as DLC Loader",
+    "DlcModLoaderDescription": "Загрузить моды как DLC",
+    "DlcModLoaderRun": "Запустить",
+    "DlcModLoaderAuthor": "Автор: ",
+    "DlcModLoaderGitHubTooltip": "Репозиторий GitHub",
+    "DlcModLoaderNexusTooltip": "Nexus Mods"
   },
   "fr": {
     "WindowTitle": "Gestionnaire de mods S.T.A.L.K.E.R. 2",
@@ -246,7 +270,19 @@
     "JsonUnsupportedFormat": "Le fichier JSON a un format non pris en charge.",
     "JsonFileEmptyOrInvalid": "Le fichier JSON est vide ou invalide.",
     "ErrorSortingMods": "Erreur lors du tri des mods par fichier JSON",
-    "ModsSortedSuccess": "Mods triés avec succès selon {0}.\n{1} mods trouvés dans le fichier."
+    "ModsSortedSuccess": "Mods triés avec succès selon {0}.\n{1} mods trouvés dans le fichier.",
+    "About": "À propos",
+    "AboutWindowTitle": "À propos de S.T.A.L.K.E.R. 2 Mod Manager",
+    "AboutAuthor": "Auteur: ",
+    "AboutRepository": "Dépôt: ",
+    "AboutThanks": "Remerciements à Herbata pour le concept DLC Mod Loader (GitHub: ",
+    "DlcModLoader": "DLC Mod Loader",
+    "DlcModLoaderTitle": "Herbata's Mod as DLC Loader",
+    "DlcModLoaderDescription": "Charger les mods en tant que DLC",
+    "DlcModLoaderRun": "Exécuter",
+    "DlcModLoaderAuthor": "Auteur: ",
+    "DlcModLoaderGitHubTooltip": "Dépôt GitHub",
+    "DlcModLoaderNexusTooltip": "Nexus Mods"
   }
 }
 
