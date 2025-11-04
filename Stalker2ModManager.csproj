@@ -12,7 +12,7 @@
     <ApplicationIcon>images\icon.ico</ApplicationIcon>
     <AssemblyName>Stalker2VortexHelper</AssemblyName>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
-    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <EnableCompressionInSingleFile>false</EnableCompressionInSingleFile>
   </PropertyGroup>
 
   <ItemGroup>
