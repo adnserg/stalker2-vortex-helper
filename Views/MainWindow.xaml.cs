@@ -520,6 +520,15 @@ namespace Stalker2ModManager.Views
             window.ShowDialog();
         }
 
+        private void About_Click(object sender, RoutedEventArgs e)
+        {
+            var window = new AboutWindow
+            {
+                Owner = this
+            };
+            window.ShowDialog();
+        }
+
         private void ModsViewSource_Filter(object sender, System.Windows.Data.FilterEventArgs e)
         {
             if (e.Item is ModInfo mod)

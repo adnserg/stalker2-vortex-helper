@@ -551,6 +551,8 @@
                     <Separator/>
                     <MenuItem x:Name="SaveConfigMenuItem" Header="_Save Config" Click="SaveConfig_Click" Style="{StaticResource SubmenuMenuItemStyle}"/>
                     <MenuItem x:Name="LoadConfigMenuItem" Header="_Load Config" Click="LoadConfig_Click" Style="{StaticResource SubmenuMenuItemStyle}"/>
+                    <Separator/>
+                    <MenuItem x:Name="AboutMenuItem" Header="_About" Click="About_Click" Style="{StaticResource SubmenuMenuItemStyle}"/>
                 </MenuItem>
                 <MenuItem x:Name="OrderMenuItem" Header="_Order">
                     <MenuItem x:Name="ExportOrderMenuItem" Header="_Export Order" Click="ExportOrder_Click" Style="{StaticResource SubmenuMenuItemStyle}"/>
