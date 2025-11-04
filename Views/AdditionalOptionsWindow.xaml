@@ -96,6 +96,12 @@
                             x:Name="BrowseJsonButton"
                             Margin="5,0,0,0"
                             Padding="8,5"/>
+                    <Button Content="Apply" 
+                            Click="Apply_Click"
+                            IsEnabled="False"
+                            x:Name="ApplyButton"
+                            Margin="5,0,0,0"
+                            Padding="8,5"/>
                 </StackPanel>
                 <TextBlock Text="Select a JSON or TXT file (any file with mod order) to sort mods based on its order."
                        Foreground="#FF888888"
@@ -106,9 +112,7 @@
 
             <!-- Buttons -->
             <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Run DLC Mod Loader" Click="RunDlcModLoader_Click" Margin="0,0,10,0" Padding="15,8"/>
-                <Button Content="Apply" Click="Apply_Click" Margin="0,0,5,0" Padding="15,8"/>
-                <Button Content="Cancel" Click="Cancel_Click" Padding="15,8"/>
+                <Button Content="Close" Click="Close_Click" Padding="15,8"/>
             </StackPanel>
         </Grid>
     </Border>

@@ -19,12 +19,14 @@ namespace Stalker2ModManager.Views
         {
             JsonFilePathTextBox.IsEnabled = true;
             BrowseJsonButton.IsEnabled = true;
+            ApplyButton.IsEnabled = true;
         }
 
         private void SortBySnapshotCheckBox_Unchecked(object sender, RoutedEventArgs e)
         {
             JsonFilePathTextBox.IsEnabled = false;
             BrowseJsonButton.IsEnabled = false;
+            ApplyButton.IsEnabled = false;
             JsonFilePathTextBox.Text = string.Empty;
         }
 
@@ -43,12 +45,6 @@ namespace Stalker2ModManager.Views
         }
 
         private void Close_Click(object sender, RoutedEventArgs e)
-        {
-            DialogResult = false;
-            Close();
-        }
-
-        private void Cancel_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = false;
             Close();
@@ -75,29 +71,6 @@ namespace Stalker2ModManager.Views
             if (e.ChangedButton == System.Windows.Input.MouseButton.Left)
             {
                 DragMove();
-            }
-        }
-
-        private void RunDlcModLoader_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                var configService = new ConfigService();
-                var runner = new HerbatasDLCModLoaderRunner();
-                var result = runner.RunUsingConfig(configService);
-
-                if (result.Success)
-                {
-                    WarningWindow.Show($"PAK created/copied to:\n{result.Message}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                else
-                {
-                    WarningWindow.Show(result.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-            catch (Exception ex)
-            {
-                WarningWindow.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

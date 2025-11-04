@@ -566,6 +566,7 @@
                 <MenuItem x:Name="InstallMenuItem" Header="_Install">
                     <MenuItem x:Name="InstallModsMenuItem" Header="_Install Mods" Click="InstallMods_Click" Style="{StaticResource SubmenuMenuItemStyle}"/>
                     <MenuItem x:Name="ClearModsMenuItem" Header="_Clear ~mods Folder" Click="ClearMods_Click" Style="{StaticResource SubmenuMenuItemStyle}"/>
+                    <MenuItem x:Name="DlcModLoaderMenuItem" Header="_DLC Mod Loader" Click="DlcModLoader_Click" Style="{StaticResource SubmenuMenuItemStyle}"/>
                 </MenuItem>
             </Menu>
 

@@ -511,6 +511,15 @@ namespace Stalker2ModManager.Views
             }
         }
 
+        private void DlcModLoader_Click(object sender, RoutedEventArgs e)
+        {
+            var window = new DlcModLoaderWindow
+            {
+                Owner = this
+            };
+            window.ShowDialog();
+        }
+
         private void ModsViewSource_Filter(object sender, System.Windows.Data.FilterEventArgs e)
         {
             if (e.Item is ModInfo mod)
