@@ -136,23 +136,37 @@
 
             <!-- Progress Bar (hidden by default) -->
             <Grid Grid.Row="3" x:Name="ProgressGrid" Visibility="Collapsed" Margin="0,0,0,10">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <ProgressBar x:Name="UpdateProgressBar" 
-                            Grid.Row="0"
-                            Height="20" 
-                            Minimum="0" 
-                            Maximum="100" 
-                            Value="0"
-                            Margin="0,0,0,5"/>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid Grid.Column="0" Margin="0,0,10,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <ProgressBar x:Name="UpdateProgressBar" 
+                                Grid.Row="0"
+                                Width="150"
+                                Height="20" 
+                                Minimum="0" 
+                                Maximum="100" 
+                                Value="0"
+                                Margin="0,0,0,5"/>
+                    <TextBlock x:Name="ProgressPercentTextBlock" 
+                              Grid.Row="1"
+                              Text="0%" 
+                              Foreground="#FF888888"
+                              FontSize="11"
+                              HorizontalAlignment="Center"/>
+                </Grid>
                 <TextBlock x:Name="ProgressTextBlock" 
-                          Grid.Row="1"
+                          Grid.Column="1"
                           Text="Downloading update..." 
                           Foreground="#FF888888"
                           FontSize="11"
-                          HorizontalAlignment="Center"/>
+                          VerticalAlignment="Center"
+                          TextWrapping="Wrap"/>
             </Grid>
 
             <!-- Buttons -->

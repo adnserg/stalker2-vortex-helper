@@ -203,3 +203,5 @@ FodyWeavers.xsd
 *.7z
 publish/
 /HerbatasDLCModLoader
+/Release
+/Debug
