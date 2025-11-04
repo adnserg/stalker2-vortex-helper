@@ -355,7 +355,7 @@ namespace Stalker2ModManager
                 return;
             }
 
-            var result = System.Windows.MessageBox.Show(
+            var result = WarningWindow.Show(
                 _localization.GetString("InstallModsWarning"),
                 _localization.GetString("Warning"),
                 MessageBoxButton.YesNo,
@@ -426,7 +426,7 @@ namespace Stalker2ModManager
                 return;
             }
 
-            var result = System.Windows.MessageBox.Show(
+            var result = WarningWindow.Show(
                 _localization.GetString("ClearModsWarning"),
                 _localization.GetString("Warning"),
                 MessageBoxButton.YesNo,
