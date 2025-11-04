@@ -1,4 +1,4 @@
-🌐 Languages: [English(current)](RELEASE_NOTES%20v1.1.0.md) | [Русский](RELEASE_NOTES%20v1.1.0.ru.md)
+🌐 Languages: [English(current)](RELEASE_NOTESv1.1.0.md) | [Русский](RELEASE_NOTESv1.1.0.ru.md)
 
 # Release Notes - v1.1.0
 

@@ -1,4 +1,4 @@
-🌐 Языки: [English](RELEASE_NOTES%20v1.1.0.md) | [Русский(current)](RELEASE_NOTES%20v1.1.0.ru.md)
+🌐 Языки: [English](RELEASE_NOTESv1.1.0.md) | [Русский(current)](RELEASE_NOTESv1.1.0.ru.md)
 
 # Примечания к выпуску - v1.1.0
 
