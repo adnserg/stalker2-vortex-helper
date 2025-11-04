@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -10,7 +10,15 @@
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <ApplicationIcon>images\icon.ico</ApplicationIcon>
+    <AssemblyName>Stalker2VortexHelper</AssemblyName>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="UpdateInstaller\**" />
+    <EmbeddedResource Remove="UpdateInstaller\**" />
+    <None Remove="UpdateInstaller\**" />
+    <Page Remove="UpdateInstaller\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <Content Include="images\icon.ico" />
@@ -18,6 +26,7 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="SharpCompress" Version="0.38.1" />
   </ItemGroup>
 
 </Project>

@@ -56,6 +56,9 @@ namespace Stalker2ModManager
                 Interval = TimeSpan.FromMilliseconds(30) // Обновляем каждые 30мс для плавности
             };
             _scrollTimer.Tick += ScrollTimer_Tick;
+
+            // Проверяем обновления при запуске (асинхронно, не блокируя UI)
+            CheckForUpdatesAsync();
         }
 
         private void ScrollTimer_Tick(object sender, EventArgs e)
@@ -1538,6 +1541,42 @@ namespace Stalker2ModManager
                 return parent;
             else
                 return FindParent<T>(parentObject);
+        }
+
+        private async void CheckForUpdatesAsync()
+        {
+            try
+            {
+                using var updateService = new Services.UpdateService();
+                var updateInfo = await updateService.CheckForUpdatesAsync();
+
+                if (updateInfo != null)
+                {
+                    var currentVersion = updateService.GetCurrentVersion();
+                    var downloadUrl = updateService.GetDownloadUrl();
+
+                    // Показываем окно обновления в UI потоке
+                    Dispatcher.Invoke(() =>
+                    {
+                        var updateWindow = new UpdateWindow(updateInfo, currentVersion, downloadUrl)
+                        {
+                            Owner = this
+                        };
+                        updateWindow.ShowDialog();
+                    });
+
+                    _logger.LogInfo($"Update available: {updateInfo.Version}");
+                }
+                else
+                {
+                    _logger.LogInfo("No updates available");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error checking for updates on startup", ex);
+                // Не показываем ошибку пользователю, чтобы не мешать работе
+            }
         }
     }
 
