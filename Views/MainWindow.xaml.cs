@@ -242,6 +242,10 @@ namespace Stalker2ModManager.Views
                 }
 
                 UpdateOrders();
+                
+                // Включаем кнопку Install Mods если моды загружены
+                InstallModsButton.IsEnabled = _mods.Count > 0;
+                
                 UpdateStatus($"Loaded {mods.Count} mods");
                 _logger.LogSuccess($"Loaded {mods.Count} mods from path: {VortexPathTextBox.Text}");
             }
@@ -331,6 +335,10 @@ namespace Stalker2ModManager.Views
                 {
                     // Применяем порядок к текущим модам
                     ApplyModsOrder(modsOrder);
+                    
+                    // Включаем/выключаем кнопку Install Mods в зависимости от наличия модов
+                    InstallModsButton.IsEnabled = _mods.Count > 0;
+                    
                     UpdateStatus($"Loaded mods order with {modsOrder.Mods.Count} mods");
                     _logger.LogSuccess($"Loaded mods order with {modsOrder.Mods.Count} mods");
                 }
@@ -349,6 +357,13 @@ namespace Stalker2ModManager.Views
 
         private async void InstallMods_Click(object sender, RoutedEventArgs e)
         {
+            // Проверяем, что моды загружены
+            if (_mods == null || _mods.Count == 0)
+            {
+                System.Windows.MessageBox.Show(_localization.GetString("NoModsLoadedMessage"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            
             if (string.IsNullOrWhiteSpace(TargetPathTextBox.Text))
             {
                 System.Windows.MessageBox.Show(_localization.GetString("SelectTargetPath"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
@@ -366,12 +381,20 @@ namespace Stalker2ModManager.Views
                 return;
             }
 
-            // Блокируем пункт меню установки
+            // Блокируем элемент управления установки
             var installMenuItem = sender as System.Windows.Controls.MenuItem;
+            var installButton = sender as System.Windows.Controls.Button;
+            
             if (installMenuItem != null)
             {
                 installMenuItem.IsEnabled = false;
                 installMenuItem.Header = "Installing...";
+            }
+            
+            if (installButton != null)
+            {
+                installButton.IsEnabled = false;
+                installButton.Content = _localization.GetString("Installing");
             }
 
             // Показываем прогресс-бар
@@ -404,11 +427,17 @@ namespace Stalker2ModManager.Views
             }
             finally
             {
-                // Восстанавливаем пункт меню
+                // Восстанавливаем элемент управления
                 if (installMenuItem != null)
                 {
                     installMenuItem.IsEnabled = true;
-                    installMenuItem.Header = "_Install Mods";
+                    installMenuItem.Header = "_" + _localization.GetString("InstallMods");
+                }
+                
+                if (installButton != null)
+                {
+                    installButton.IsEnabled = true;
+                    installButton.Content = _localization.GetString("InstallMods");
                 }
 
                 // Скрываем прогресс-бар
@@ -609,6 +638,9 @@ namespace Stalker2ModManager.Views
 
             // Обновляем порядки после сортировки
             UpdateOrders();
+            
+            // Включаем/выключаем кнопку Install Mods в зависимости от наличия модов
+            InstallModsButton.IsEnabled = _mods.Count > 0;
         }
 
         private void ExportOrder_Click(object sender, RoutedEventArgs e)
@@ -1039,6 +1071,10 @@ namespace Stalker2ModManager.Views
                 UpdateOrders();
                 var fileName = System.IO.Path.GetFileName(jsonFilePath);
                 var fileType = System.IO.Path.GetExtension(jsonFilePath).ToLower() == ".txt" ? "TXT" : "JSON";
+                
+                // Включаем/выключаем кнопку Install Mods в зависимости от наличия модов
+                InstallModsButton.IsEnabled = _mods.Count > 0;
+                
                 UpdateStatus($"Sorted {_mods.Count} mods according to {fileName} ({fileType})");
                 _logger.LogSuccess($"Sorted {_mods.Count} mods according to {fileName} ({fileType}). Found {modOrderList.Count} mods in file");
 
@@ -1052,6 +1088,21 @@ namespace Stalker2ModManager.Views
             {
                 _logger.LogError("Error sorting mods by JSON file", ex);
                 System.Windows.MessageBox.Show($"{_localization.GetString("ErrorSortingMods")}: {ex.Message}", _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // Keyboard shortcuts
+        private void ModsListBox_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            // CTRL+A - Select all
+            if (e.Key == System.Windows.Input.Key.A && 
+                (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
+            {
+                if (ModsListBox != null && ModsListBox.Items.Count > 0)
+                {
+                    ModsListBox.SelectAll();
+                    e.Handled = true;
+                }
             }
         }
 
@@ -1577,7 +1628,7 @@ namespace Stalker2ModManager.Views
                 ExportOrderMenuItem.Header = "_" + _localization.GetString("ExportOrder");
                 ImportOrderMenuItem.Header = "_" + _localization.GetString("ImportOrder");
                 AdvancedMenuItem.Header = "_" + _localization.GetString("Advanced");
-                InstallModsMenuItem.Header = "_" + _localization.GetString("InstallMods");
+                InstallModsMenuItem.Header = _localization.GetString("InstallMods");
                 ClearModsMenuItem.Header = "_" + _localization.GetString("ClearMods");
                 
                 // Mods GroupBox
@@ -1586,6 +1637,9 @@ namespace Stalker2ModManager.Views
                 // Move buttons
                 MoveUpButton.Content = _localization.GetString("MoveUp");
                 MoveDownButton.Content = _localization.GetString("MoveDown");
+                
+                // Install Mods button
+                InstallModsButton.Content = _localization.GetString("InstallMods");
                 
                 // Column headers
                 var orderHeader = FindName("OrderHeader") as System.Windows.Controls.TextBlock;
