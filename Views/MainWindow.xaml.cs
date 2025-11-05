@@ -155,7 +155,7 @@ namespace Stalker2ModManager.Views
             }
         }
 
-        private System.Windows.Controls.ScrollViewer GetScrollViewer(System.Windows.Controls.ListBox listBox)
+        private static System.Windows.Controls.ScrollViewer? GetScrollViewer(System.Windows.Controls.ListBox listBox)
         {
             if (listBox == null) return null;
             
@@ -514,8 +514,8 @@ namespace Stalker2ModManager.Views
                     return;
                 }
 
-                ModConfig pathsConfig = null;
-                ModOrder modsOrder = null;
+                ModConfig? pathsConfig = null;
+                ModOrder? modsOrder = null;
 
                 // Если есть старый формат конфига, загружаем его
                 if (hasLegacyConfig && _configService.TryLoadLegacyConfig(out var legacyPaths, out var legacyOrder))
@@ -1118,7 +1118,7 @@ namespace Stalker2ModManager.Views
 
                 // Определяем тип файла
                 var fileExtension = System.IO.Path.GetExtension(jsonFilePath).ToLower();
-                List<string> files = null;
+                List<string>? files = null;
 
                 if (fileExtension == ".txt")
                 {
@@ -1295,7 +1295,7 @@ namespace Stalker2ModManager.Views
                     var modNameLower = modNameFromFile.ToLowerInvariant();
                     var baseNameFromFile = GetBaseModName(modNameFromFile).ToLowerInvariant();
                     
-                    ModInfo matchedMod = null;
+                    ModInfo? matchedMod = null;
                     string matchType = "";
                     
                     // 1. Пробуем точное совпадение (без учета регистра)
@@ -1322,7 +1322,7 @@ namespace Stalker2ModManager.Views
                     // 3. Если всё еще не нашли, ищем частичное совпадение
                     if (matchedMod == null)
                     {
-                        ModInfo bestMatch = null;
+                        ModInfo? bestMatch = null;
                         int bestMatchScore = 0;
 
                         foreach (var mod in modsByLowerName.Values)
@@ -1465,11 +1465,10 @@ namespace Stalker2ModManager.Views
         // Drag and Drop handlers
         private void ModsListBox_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            var listBox = sender as System.Windows.Controls.ListBox;
-            if (listBox == null) return;
+            if (sender is not System.Windows.Controls.ListBox listBox) return;
 
             var item = System.Windows.Input.Mouse.DirectlyOver;
-            var checkBox = FindParent<System.Windows.Controls.CheckBox>(item as System.Windows.DependencyObject);
+            var checkBox = FindParent<System.Windows.Controls.CheckBox>(item as DependencyObject);
             
             // Если клик по чекбоксу, не начинаем drag и позволяем стандартному поведению выделения работать
             if (checkBox != null)
@@ -1731,7 +1730,7 @@ namespace Stalker2ModManager.Views
             }
         }
 
-        private void UpdateInsertionIndicator(System.Windows.Controls.ListBox listBox, System.Windows.DragEventArgs e)
+        private void UpdateInsertionIndicator(System.Windows.Controls.ListBox? listBox, System.Windows.DragEventArgs e)
         {
             if (_insertionLineAdorner == null || listBox == null) return;
             
@@ -1791,11 +1790,11 @@ namespace Stalker2ModManager.Views
             
             // Восстанавливаем визуальный стиль перетаскиваемого элемента
             RestoreDraggedItemVisual();
-            
-            var listBox = sender as System.Windows.Controls.ListBox;
+
+            System.Windows.Controls.ListBox? listBox = sender as System.Windows.Controls.ListBox;
             if (listBox == null) return;
 
-            ModInfo draggedMod = null;
+            ModInfo? draggedMod = null;
             
             // Пытаемся получить данные из DragEventArgs
             if (e.Data.GetDataPresent(typeof(ModInfo)))
@@ -1818,10 +1817,9 @@ namespace Stalker2ModManager.Views
                 int targetIndex = _mods.IndexOf(targetMod);
 
                 // Определяем, вставляем ли мы выше или ниже элемента
-                var targetListItem = listBox.ItemContainerGenerator.ContainerFromItem(targetMod) as System.Windows.Controls.ListBoxItem;
                 int newIndex = targetIndex;
-                
-                if (targetListItem != null)
+
+                if (listBox.ItemContainerGenerator.ContainerFromItem(targetMod) is System.Windows.Controls.ListBoxItem targetListItem)
                 {
                     var itemPoint = e.GetPosition(targetListItem);
                     var isAbove = itemPoint.Y < targetListItem.ActualHeight / 2;
@@ -2363,14 +2361,16 @@ namespace Stalker2ModManager.Views
         }
 
         // Helper method to find parent control
-        private T FindParent<T>(System.Windows.DependencyObject child) where T : System.Windows.DependencyObject
+        private T? FindParent<T>(System.Windows.DependencyObject? child) where T : System.Windows.DependencyObject
         {
+            if (child is null)
+                return null;
+
             System.Windows.DependencyObject parentObject = System.Windows.Media.VisualTreeHelper.GetParent(child);
 
             if (parentObject == null) return null;
 
-            T parent = parentObject as T;
-            if (parent != null)
+            if (parentObject is T parent)
                 return parent;
             else
                 return FindParent<T>(parentObject);
@@ -2430,14 +2430,14 @@ namespace Stalker2ModManager.Views
 // Extension method for ListBox to get item at point
 public static class ListBoxExtensions
 {
-    public static object GetItemAt(this System.Windows.Controls.ListBox listBox, System.Windows.Point point)
+    public static object? GetItemAt(this System.Windows.Controls.ListBox listBox, System.Windows.Point point)
     {
         var element = listBox.InputHitTest(point) as System.Windows.DependencyObject;
         while (element != null)
         {
-            if (element is System.Windows.Controls.ListBoxItem)
+            if (element is System.Windows.Controls.ListBoxItem item)
             {
-                return ((System.Windows.Controls.ListBoxItem)element).Content;
+                return item.Content;
             }
             element = System.Windows.Media.VisualTreeHelper.GetParent(element);
         }

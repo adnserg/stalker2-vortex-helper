@@ -9,25 +9,26 @@ namespace Stalker2ModManager.Views
     {
         public MessageBoxResult Result { get; private set; } = MessageBoxResult.Cancel;
 
-        public WarningWindow(string message, string title = "Warning", MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxImage icon = MessageBoxImage.Warning, string details = null)
+        public WarningWindow(string message, string title = "Warning", MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxImage icon = MessageBoxImage.Warning, string? details = null)
         {
             InitializeComponent();
             
             var localization = LocalizationService.Instance;
             
             // Настраиваем заголовок в зависимости от типа
-            if (icon == MessageBoxImage.Error)
-            {
-                TitleTextBlock.Text = localization.GetString("Error");
-            }
-            else if (icon == MessageBoxImage.Information)
-            {
-                TitleTextBlock.Text = localization.GetString("Success");
-            }
-            else
-            {
-                TitleTextBlock.Text = localization.GetString("Warning");
-            }
+            //if (icon == MessageBoxImage.Error)
+            //{
+            //    TitleTextBlock.Text = localization.GetString("Error");
+            //}
+            //else if (icon == MessageBoxImage.Information)
+            //{
+            //    TitleTextBlock.Text = localization.GetString("Success");
+            //}
+            //else
+            //{
+            //    TitleTextBlock.Text = localization.GetString("Warning");
+            //}
+            TitleTextBlock.Text = title;
             
             MessageTextBlock.Text = message;
             
@@ -91,10 +92,12 @@ namespace Stalker2ModManager.Views
             Close();
         }
 
-        public static MessageBoxResult Show(string message, string title = "Warning", MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxImage icon = MessageBoxImage.Warning, string details = null)
+        public static MessageBoxResult Show(string message, string title = "Warning", MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxImage icon = MessageBoxImage.Warning, string? details = null)
         {
-            var window = new WarningWindow(message, title, buttons, icon, details);
-            window.Owner = Application.Current.MainWindow;
+            var window = new WarningWindow(message, title, buttons, icon, details)
+            {
+                Owner = Application.Current.MainWindow
+            };
             window.ShowDialog();
             return window.Result;
         }

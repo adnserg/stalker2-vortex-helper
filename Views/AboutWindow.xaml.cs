@@ -17,7 +17,7 @@ namespace Stalker2ModManager.Views
             UpdateLocalization();
         }
 
-        private void Localization_LanguageChanged(object sender, System.EventArgs e)
+        private void Localization_LanguageChanged(object? sender, System.EventArgs e)
         {
             UpdateLocalization();
         }
