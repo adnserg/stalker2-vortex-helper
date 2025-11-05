@@ -267,6 +267,12 @@ namespace Stalker2ModManager.Services
                 ["Apply"] = "Apply",
                 ["Cancel"] = "Cancel",
                 
+                // Save/Cancel changes
+                ["CancelChangesTitle"] = "Cancel Changes",
+                ["CancelChangesConfirmation"] = "Cancel all unsaved changes to the mod list?",
+                ["UnsavedChangesTitle"] = "Unsaved Changes",
+                ["UnsavedChangesConfirmation"] = "You have unsaved changes to the mod list. Save before closing?",
+                
                 // Window controls
                 ["Minimize"] = "Minimize",
                 ["Close"] = "Close",
@@ -342,6 +348,12 @@ namespace Stalker2ModManager.Services
                 ["SelectFile"] = "Выберите файл JSON/TXT:",
                 ["Apply"] = "Применить",
                 ["Cancel"] = "Отмена",
+                
+                // Save/Cancel changes
+                ["CancelChangesTitle"] = "Отменить изменения",
+                ["CancelChangesConfirmation"] = "Отменить все несохраненные изменения списка модов?",
+                ["UnsavedChangesTitle"] = "Несохраненные изменения",
+                ["UnsavedChangesConfirmation"] = "У вас есть несохраненные изменения списка модов. Сохранить перед закрытием?",
                 
                 // Window controls
                 ["Minimize"] = "Свернуть",

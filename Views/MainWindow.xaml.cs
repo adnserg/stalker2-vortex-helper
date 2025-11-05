@@ -338,8 +338,8 @@ namespace Stalker2ModManager.Views
             }
             
             var result = WarningWindow.Show(
-                "Отменить все несохраненные изменения списка модов?",
-                "Отменить изменения",
+                _localization.GetString("CancelChangesConfirmation"),
+                _localization.GetString("CancelChangesTitle"),
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
             
@@ -2209,8 +2209,8 @@ namespace Stalker2ModManager.Views
             if (_hasUnsavedChanges)
             {
                 var result = WarningWindow.Show(
-                    "У вас есть несохраненные изменения списка модов. Сохранить перед закрытием?",
-                    "Несохраненные изменения",
+                    _localization.GetString("UnsavedChangesConfirmation"),
+                    _localization.GetString("UnsavedChangesTitle"),
                     MessageBoxButton.YesNoCancel,
                     MessageBoxImage.Question);
                 
