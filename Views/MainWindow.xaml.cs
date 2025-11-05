@@ -1254,18 +1254,36 @@ namespace Stalker2ModManager.Views
             var item = System.Windows.Input.Mouse.DirectlyOver;
             var checkBox = FindParent<System.Windows.Controls.CheckBox>(item as System.Windows.DependencyObject);
             
-            // Если клик по чекбоксу, не начинаем drag
+            // Если клик по чекбоксу, не начинаем drag и позволяем стандартному поведению выделения работать
             if (checkBox != null)
             {
                 return;
             }
 
+            // Проверяем, нажата ли клавиша Ctrl или Shift
+            bool isCtrlPressed = (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control;
+            bool isShiftPressed = (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Shift) == System.Windows.Input.ModifierKeys.Shift;
+            
             _dragStartPoint = e.GetPosition(null);
             var hitItem = listBox.GetItemAt(e.GetPosition(listBox));
             if (hitItem is ModInfo mod)
             {
                 _draggedMod = mod;
-                listBox.SelectedItem = mod;
+                
+                // Если нажат Ctrl или Shift, не трогаем выделение - позволяем стандартному поведению ListBox работать
+                if (!isCtrlPressed && !isShiftPressed)
+                {
+                    // Если элемент уже выделен один, не меняем выделение (для drag & drop)
+                    if (listBox.SelectedItems.Count == 1 && listBox.SelectedItem == mod)
+                    {
+                        // Элемент уже выделен, продолжаем для drag & drop
+                    }
+                    else
+                    {
+                        listBox.SelectedItem = mod;
+                    }
+                }
+                // При Ctrl+клике или Shift+клике стандартное поведение ListBox автоматически обработает выделение
                 
                 // Находим соответствующий ListBoxItem для визуальной обратной связи
                 _draggedListItem = listBox.ItemContainerGenerator.ContainerFromItem(mod) as System.Windows.Controls.ListBoxItem;
@@ -1600,9 +1618,53 @@ namespace Stalker2ModManager.Views
 
         private void CheckBox_Click(object sender, RoutedEventArgs e)
         {
-            // Предотвращаем выделение элемента ListBox при клике на чекбокс
+            // Проверяем, нажата ли клавиша Ctrl
+            bool isCtrlPressed = (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control;
+            
+            if (sender is System.Windows.Controls.CheckBox checkBox && checkBox.DataContext is ModInfo clickedMod)
+            {
+                // Если нажат Ctrl, добавляем/удаляем элемент из выделения
+                if (isCtrlPressed)
+                {
+                    // Если элемент уже выделен, удаляем его из выделения
+                    if (ModsListBox.SelectedItems.Contains(clickedMod))
+                    {
+                        ModsListBox.SelectedItems.Remove(clickedMod);
+                    }
+                    else
+                    {
+                        // Если элемент не выделен, добавляем его в выделение
+                        ModsListBox.SelectedItems.Add(clickedMod);
+                    }
+                    // Не сбрасываем выделение при Ctrl+клике
+                    return;
+                }
+                
+                // Проверяем, выделено ли несколько элементов (больше одного)
+                if (ModsListBox.SelectedItems.Count > 1)
+                {
+                    // Если выделено несколько элементов, изменяем состояние всех выделенных чекбоксов
+                    // Получаем новое состояние чекбокса (IsChecked уже обновлен событием Click)
+                    bool? isChecked = checkBox.IsChecked;
+                    bool newState = isChecked == true;
+                    
+                    // Применяем это состояние ко всем выделенным модам
+                    foreach (ModInfo mod in ModsListBox.SelectedItems)
+                    {
+                        if (mod is ModInfo selectedMod)
+                        {
+                            selectedMod.IsEnabled = newState;
+                        }
+                    }
+                    
+                    e.Handled = true;
+                    return;
+                }
+            }
+            
+            // Если Ctrl не нажат и выделен один или ноль элементов, предотвращаем выделение элемента ListBox при клике на чекбокс
             // Сбрасываем выделение, если оно есть
-            if (ModsListBox.SelectedItem != null)
+            if (!isCtrlPressed && ModsListBox.SelectedItem != null)
             {
                 var selectedItem = ModsListBox.SelectedItem;
                 ModsListBox.SelectedItem = null;
