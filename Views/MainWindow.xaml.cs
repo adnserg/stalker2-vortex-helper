@@ -285,7 +285,7 @@ namespace Stalker2ModManager.Views
         {
             try
             {
-                // Загружаем текущий конфиг, чтобы сохранить размер окна
+                // Сохраняем ТОЛЬКО конфиг (пути и размер окна), НЕ список модов
                 var pathsConfig = _configService.LoadPathsConfig();
                 pathsConfig.VortexPath = VortexPathTextBox.Text;
                 pathsConfig.TargetPath = TargetPathTextBox.Text;
@@ -293,16 +293,6 @@ namespace Stalker2ModManager.Views
                 pathsConfig.WindowHeight = Height;
                 _configService.SavePathsConfig(pathsConfig);
                 _logger.LogInfo("Paths config saved");
-
-                // Сохраняем порядок модов отдельно
-                var modsOrder = _configService.CreateModOrderFromMods(_mods.ToList());
-                _configService.SaveModsOrder(modsOrder);
-                _logger.LogInfo($"Mods order saved: {modsOrder.Mods.Count} mods");
-
-                // Сохраняем текущее состояние как исходное
-                SaveOriginalModsState();
-                _hasUnsavedChanges = false;
-                UpdateSaveCancelButtons();
 
                 UpdateStatus("Config saved");
                 WarningWindow.Show(_localization.GetString("ConfigSavedSuccess"), _localization.GetString("Success"), MessageBoxButton.OK, MessageBoxImage.Information);
@@ -312,6 +302,31 @@ namespace Stalker2ModManager.Views
             {
                 _logger.LogError("Error saving config", ex);
                 WarningWindow.Show($"{_localization.GetString("ErrorSavingConfig")}: {ex.Message}", _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        
+        private void SaveModsList_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Сохраняем ТОЛЬКО список модов
+                var modsOrder = _configService.CreateModOrderFromMods(_mods.ToList());
+                _configService.SaveModsOrder(modsOrder);
+                _logger.LogInfo($"Mods order saved: {modsOrder.Mods.Count} mods");
+
+                // Сохраняем текущее состояние как исходное
+                SaveOriginalModsState();
+                _hasUnsavedChanges = false;
+                UpdateSaveCancelButtons();
+
+                UpdateStatus("Mods order saved");
+                WarningWindow.Show("Порядок модов сохранен", _localization.GetString("Success"), MessageBoxButton.OK, MessageBoxImage.Information);
+                _logger.LogSuccess("Mods order saved successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error saving mods order", ex);
+                WarningWindow.Show($"Ошибка при сохранении порядка модов: {ex.Message}", _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -2046,6 +2061,16 @@ namespace Stalker2ModManager.Views
                 MoveUpButton.Content = _localization.GetString("MoveUp");
                 MoveDownButton.Content = _localization.GetString("MoveDown");
                 
+                // Save/Cancel buttons
+                if (SaveChangesButton != null)
+                {
+                    SaveChangesButton.Content = _localization.GetString("SaveChanges");
+                }
+                if (CancelChangesButton != null)
+                {
+                    CancelChangesButton.Content = _localization.GetString("CancelChanges");
+                }
+                
                 // Install Mods button
                 InstallModsButton.Content = _localization.GetString("InstallMods");
                 
@@ -2086,7 +2111,7 @@ namespace Stalker2ModManager.Views
                 
                 if (result == MessageBoxResult.Yes)
                 {
-                    SaveConfig_Click(this, new RoutedEventArgs());
+                    SaveModsList_Click(this, new RoutedEventArgs());
                     _isClosing = true;
                 }
                 else if (result == MessageBoxResult.Cancel)
