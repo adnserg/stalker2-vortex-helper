@@ -25,11 +25,11 @@ namespace Stalker2ModManager.Views
         private readonly Services.LocalizationService _localization;
         private ObservableCollection<ModInfo> _mods;
         private System.Windows.Data.CollectionViewSource _modsViewSource;
-        private ModInfo _draggedMod;
+        private ModInfo? _draggedMod;
         private Point _dragStartPoint;
         private System.Windows.Threading.DispatcherTimer _scrollTimer;
-        private System.Windows.Controls.ListBoxItem _draggedListItem;
-        private InsertionLineAdorner _insertionLineAdorner;
+        private System.Windows.Controls.ListBoxItem? _draggedListItem;
+        private InsertionLineAdorner? _insertionLineAdorner;
 
         public MainWindow()
         {
@@ -38,9 +38,11 @@ namespace Stalker2ModManager.Views
             _configService = new ConfigService();
             _logger = Services.Logger.Instance;
             _localization = Services.LocalizationService.Instance;
-            _mods = new ObservableCollection<ModInfo>();
-            _modsViewSource = new System.Windows.Data.CollectionViewSource();
-            _modsViewSource.Source = _mods;
+            _mods = [];
+            _modsViewSource = new System.Windows.Data.CollectionViewSource
+            {
+                Source = _mods
+            };
             _modsViewSource.Filter += ModsViewSource_Filter;
             ModsListBox.ItemsSource = _modsViewSource.View;
 
@@ -74,7 +76,7 @@ namespace Stalker2ModManager.Views
             CheckForUpdatesAsync();
         }
 
-        private void ScrollTimer_Tick(object sender, EventArgs e)
+        private void ScrollTimer_Tick(object? sender, EventArgs e)
         {
             if (ModsListBox == null)
             {
@@ -624,12 +626,70 @@ namespace Stalker2ModManager.Views
                 Height = pathsConfig.WindowHeight;
             }
 
-            // Загружаем порядок модов
-            var modsOrder = _configService.LoadModsOrder();
-            if (modsOrder.Mods.Any())
+            // Если указана папка с модами, автоматически загружаем моды
+            if (!string.IsNullOrWhiteSpace(pathsConfig.VortexPath))
             {
-                ApplyModsOrder(modsOrder);
-                _logger.LogDebug($"Applied saved mods order on startup: {modsOrder.Mods.Count} mods");
+                try
+                {
+                    var mods = _modManagerService.LoadModsFromVortexPath(pathsConfig.VortexPath);
+                    _mods.Clear();
+
+                    // Загружаем сохраненный порядок модов
+                    var savedOrder = _configService.LoadModsOrder();
+                    var orderByName = savedOrder.Mods.ToDictionary(m => m.Name, m => m);
+
+                    // Находим максимальный порядок из сохраненных модов
+                    int maxOrder = savedOrder.Mods.Any() ? savedOrder.Mods.Max(m => m.Order) : -1;
+
+                    // Устанавливаем порядок из сохраненного конфига или добавляем в конец
+                    foreach (var mod in mods)
+                    {
+                        if (orderByName.TryGetValue(mod.Name, out var orderItem))
+                        {
+                            mod.Order = orderItem.Order;
+                            mod.IsEnabled = orderItem.IsEnabled;
+                        }
+                        else
+                        {
+                            // Если мод не найден в сохраненном порядке, добавляем в конец
+                            mod.Order = ++maxOrder;
+                            mod.IsEnabled = true;
+                        }
+                        _mods.Add(mod);
+                    }
+
+                    // Сортируем по порядку
+                    var sortedMods = _mods.OrderBy(m => m.Order).ToList();
+                    _mods.Clear();
+                    foreach (var mod in sortedMods)
+                    {
+                        _mods.Add(mod);
+                    }
+
+                    UpdateOrders();
+                    
+                    // Включаем кнопку Install Mods если моды загружены
+                    InstallModsButton.IsEnabled = _mods.Count > 0;
+                    
+                    _logger.LogInfo($"Auto-loaded {mods.Count} mods from saved path: {pathsConfig.VortexPath}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError("Error auto-loading mods on startup", ex);
+                    // Не показываем ошибку пользователю при старте, только логируем
+                }
+            }
+
+            // Загружаем порядок модов (если моды уже были загружены выше, порядок уже применен)
+            // Если моды не были загружены, но есть сохраненный порядок, применяем его к существующим модам
+            if (_mods.Count == 0)
+            {
+                var modsOrder = _configService.LoadModsOrder();
+                if (modsOrder.Mods.Any())
+                {
+                    ApplyModsOrder(modsOrder);
+                    _logger.LogDebug($"Applied saved mods order on startup: {modsOrder.Mods.Count} mods");
+                }
             }
         }
 
@@ -1632,7 +1692,7 @@ namespace Stalker2ModManager.Views
             }
         }
 
-        private void Localization_LanguageChanged(object sender, EventArgs e)
+        private void Localization_LanguageChanged(object? sender, EventArgs e)
         {
             // Обновляем выбранный язык в ComboBox
             foreach (System.Windows.Controls.ComboBoxItem item in LanguageComboBox.Items)
