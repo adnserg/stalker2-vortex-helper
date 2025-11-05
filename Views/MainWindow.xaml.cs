@@ -1815,7 +1815,34 @@ namespace Stalker2ModManager.Views
             if (targetItem is ModInfo targetMod && targetMod != draggedMod)
             {
                 int oldIndex = _mods.IndexOf(draggedMod);
-                int newIndex = _mods.IndexOf(targetMod);
+                int targetIndex = _mods.IndexOf(targetMod);
+
+                // Определяем, вставляем ли мы выше или ниже элемента
+                var targetListItem = listBox.ItemContainerGenerator.ContainerFromItem(targetMod) as System.Windows.Controls.ListBoxItem;
+                int newIndex = targetIndex;
+                
+                if (targetListItem != null)
+                {
+                    var itemPoint = e.GetPosition(targetListItem);
+                    var isAbove = itemPoint.Y < targetListItem.ActualHeight / 2;
+                    
+                    if (isAbove)
+                    {
+                        // Вставляем выше элемента
+                        newIndex = targetIndex;
+                    }
+                    else
+                    {
+                        // Вставляем ниже элемента
+                        newIndex = targetIndex + 1;
+                    }
+                }
+
+                // Корректируем индекс, если старый индекс меньше нового (после удаления индекс сдвинется)
+                if (oldIndex < newIndex)
+                {
+                    newIndex--;
+                }
 
                 if (oldIndex != newIndex)
                 {
@@ -1824,6 +1851,86 @@ namespace Stalker2ModManager.Views
                     UpdateOrders();
                     ModsListBox.SelectedItem = draggedMod;
                     _logger.LogDebug($"Moved mod '{draggedMod.Name}' via drag-drop (from {oldIndex} to {newIndex})");
+                }
+            }
+            else if (targetItem == null)
+            {
+                // Если не нашли элемент, пытаемся определить позицию на основе позиции курсора
+                // Проверяем, находится ли курсор в пределах списка
+                if (point.Y >= 0 && point.Y <= listBox.ActualHeight)
+                {
+                    // Находим ближайший элемент
+                    for (int i = 0; i < listBox.Items.Count; i++)
+                    {
+                        var item = listBox.ItemContainerGenerator.ContainerFromIndex(i) as System.Windows.Controls.ListBoxItem;
+                        if (item != null)
+                        {
+                            var itemTop = item.TranslatePoint(new Point(0, 0), listBox).Y;
+                            var itemBottom = itemTop + item.ActualHeight;
+                            
+                            if (point.Y >= itemTop && point.Y <= itemBottom)
+                            {
+                                // Нашли элемент, используем ту же логику
+                                var itemPoint = e.GetPosition(item);
+                                var isAbove = itemPoint.Y < item.ActualHeight / 2;
+                                
+                                int oldIndex = _mods.IndexOf(draggedMod);
+                                int newIndex = i;
+                                
+                                if (!isAbove && oldIndex < newIndex)
+                                {
+                                    newIndex++;
+                                }
+                                
+                                if (oldIndex != newIndex)
+                                {
+                                    _mods.RemoveAt(oldIndex);
+                                    if (oldIndex < newIndex)
+                                    {
+                                        newIndex--;
+                                    }
+                                    _mods.Insert(newIndex, draggedMod);
+                                    UpdateOrders();
+                                    ModsListBox.SelectedItem = draggedMod;
+                                    _logger.LogDebug($"Moved mod '{draggedMod.Name}' via drag-drop (from {oldIndex} to {newIndex})");
+                                }
+                                break;
+                            }
+                            else if (point.Y < itemTop && i == 0)
+                            {
+                                // Вставляем в начало
+                                int oldIndex = _mods.IndexOf(draggedMod);
+                                if (oldIndex != 0)
+                                {
+                                    _mods.RemoveAt(oldIndex);
+                                    _mods.Insert(0, draggedMod);
+                                    UpdateOrders();
+                                    ModsListBox.SelectedItem = draggedMod;
+                                    _logger.LogDebug($"Moved mod '{draggedMod.Name}' via drag-drop (from {oldIndex} to 0)");
+                                }
+                                break;
+                            }
+                            else if (point.Y > itemBottom && i == listBox.Items.Count - 1)
+                            {
+                                // Вставляем в конец
+                                int oldIndex = _mods.IndexOf(draggedMod);
+                                int newIndex = _mods.Count - 1;
+                                if (oldIndex != newIndex)
+                                {
+                                    _mods.RemoveAt(oldIndex);
+                                    if (oldIndex < newIndex)
+                                    {
+                                        newIndex--;
+                                    }
+                                    _mods.Insert(newIndex, draggedMod);
+                                    UpdateOrders();
+                                    ModsListBox.SelectedItem = draggedMod;
+                                    _logger.LogDebug($"Moved mod '{draggedMod.Name}' via drag-drop (from {oldIndex} to {newIndex})");
+                                }
+                                break;
+                            }
+                        }
+                    }
                 }
             }
 
