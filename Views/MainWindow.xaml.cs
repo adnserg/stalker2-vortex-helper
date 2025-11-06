@@ -2366,6 +2366,9 @@ namespace Stalker2ModManager.Views
                     _mods.RemoveAt(oldIndex);
                     _mods.Insert(newIndex, draggedMod);
                     UpdateOrders();
+                    // Применяем сортировку после перемещения, чтобы обновить визуальное представление
+                    ApplySorting();
+                    UpdateSortHeaderButtons();
                     ModsListBox.SelectedItem = draggedMod;
                     _logger.LogDebug($"Moved mod '{draggedMod.Name}' via drag-drop (from {oldIndex} to {newIndex})");
                 }
@@ -2407,6 +2410,9 @@ namespace Stalker2ModManager.Views
                                     }
                                     _mods.Insert(newIndex, draggedMod);
                                     UpdateOrders();
+                                    // Применяем сортировку после перемещения, чтобы обновить визуальное представление
+                                    ApplySorting();
+                                    UpdateSortHeaderButtons();
                                     ModsListBox.SelectedItem = draggedMod;
                                     _logger.LogDebug($"Moved mod '{draggedMod.Name}' via drag-drop (from {oldIndex} to {newIndex})");
                                 }
@@ -2421,6 +2427,9 @@ namespace Stalker2ModManager.Views
                                     _mods.RemoveAt(oldIndex);
                                     _mods.Insert(0, draggedMod);
                                     UpdateOrders();
+                                    // Применяем сортировку после перемещения, чтобы обновить визуальное представление
+                                    ApplySorting();
+                                    UpdateSortHeaderButtons();
                                     ModsListBox.SelectedItem = draggedMod;
                                     _logger.LogDebug($"Moved mod '{draggedMod.Name}' via drag-drop (from {oldIndex} to 0)");
                                 }
@@ -2440,6 +2449,9 @@ namespace Stalker2ModManager.Views
                                     }
                                     _mods.Insert(newIndex, draggedMod);
                                     UpdateOrders();
+                                    // Применяем сортировку после перемещения, чтобы обновить визуальное представление
+                                    ApplySorting();
+                                    UpdateSortHeaderButtons();
                                     ModsListBox.SelectedItem = draggedMod;
                                     _logger.LogDebug($"Moved mod '{draggedMod.Name}' via drag-drop (from {oldIndex} to {newIndex})");
                                 }
