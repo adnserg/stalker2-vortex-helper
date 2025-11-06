@@ -7,6 +7,8 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -86,6 +88,7 @@ namespace Stalker2ModManager.Views
             };
             _scrollTimer.Tick += ScrollTimer_Tick;
 
+            CheckGameAvailability();
             // Проверяем обновления при запуске (асинхронно, не блокируя UI)
             CheckForUpdatesAsync();
         }
@@ -210,6 +213,7 @@ namespace Stalker2ModManager.Views
             {
                 TargetPathTextBox.Text = dialog.SelectedPath;
                 _logger.LogInfo($"Target path selected: {dialog.SelectedPath}");
+                CheckGameAvailability();
             }
         }
 
@@ -543,6 +547,7 @@ namespace Stalker2ModManager.Views
                 {
                     VortexPathTextBox.Text = pathsConfig.VortexPath;
                     TargetPathTextBox.Text = pathsConfig.TargetPath;
+                    CheckGameAvailability();
                 }
 
                 // Применяем порядок модов, если он загружен
@@ -1096,6 +1101,144 @@ namespace Stalker2ModManager.Views
                     _logger.LogInfo($"Sorting mods by {fileType} file: {optionsWindow.JsonFilePath}");
                     SortModsByJsonFile(optionsWindow.JsonFilePath);
                 }
+            }
+        }
+
+        private void CheckGameAvailability()
+        {
+            try
+            {
+                if (LaunchGameSection == null)
+                {
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(TargetPathTextBox.Text))
+                {
+                    LaunchGameSection.Visibility = Visibility.Collapsed;
+                    return;
+                }
+
+                var targetPath = TargetPathTextBox.Text.Trim();
+                if (!Directory.Exists(targetPath))
+                {
+                    LaunchGameSection.Visibility = Visibility.Collapsed;
+                    return;
+                }
+
+                // Find executable
+                var possibleExePaths = new[]
+                {
+                    Path.Combine(targetPath, "Stalker2", "Binaries", "Win64", "Stalker2-Win64-Shipping.exe"),
+                    Path.Combine(targetPath, "Stalker2", "Binaries", "Win64", "Stalker2.exe"),
+                    Path.Combine(targetPath, "Stalker2", "Binaries", "Win64", "Stalker2Game.exe"),
+                    Path.Combine(targetPath, "Stalker2-Win64-Shipping.exe"),
+                    Path.Combine(targetPath, "Stalker2.exe")
+                };
+
+                bool gameFound = false;
+                foreach (var path in possibleExePaths)
+                {
+                    if (File.Exists(path))
+                    {
+                        gameFound = true;
+                        break;
+                    }
+                }
+
+                if (gameFound)
+                {
+                    LaunchGameSection.Visibility = Visibility.Visible;
+                    _logger.LogInfo("Stalker 2 game found and ready to launch");
+                }
+                else
+                {
+                    LaunchGameSection.Visibility = Visibility.Collapsed;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error checking game availability", ex);
+                if (LaunchGameSection != null)
+                {
+                    LaunchGameSection.Visibility = Visibility.Collapsed;
+                }
+            }
+        }
+
+        private void LaunchStalker2_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(TargetPathTextBox.Text))
+                {
+                    WarningWindow.Show(_localization.GetString("SelectTargetPath"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                var targetPath = TargetPathTextBox.Text.Trim();
+                if (!Directory.Exists(targetPath))
+                {
+                    WarningWindow.Show(_localization.GetString("TargetPathNotFound"), _localization.GetString("Error"), MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                _logger.LogInfo($"Attempting to launch Stalker 2 from: {targetPath}");
+
+                // Find executable
+                var possibleExePaths = new[]
+                {
+                    Path.Combine(targetPath, "Stalker2", "Binaries", "Win64", "Stalker2-Win64-Shipping.exe"),
+                    Path.Combine(targetPath, "Stalker2", "Binaries", "Win64", "Stalker2.exe"),
+                    Path.Combine(targetPath, "Stalker2", "Binaries", "Win64", "Stalker2Game.exe"),
+                    Path.Combine(targetPath, "Stalker2-Win64-Shipping.exe"),
+                    Path.Combine(targetPath, "Stalker2.exe")
+                };
+
+                string? exePath = null;
+                foreach (var path in possibleExePaths)
+                {
+                    if (File.Exists(path))
+                    {
+                        exePath = path;
+                        break;
+                    }
+                }
+
+                if (string.IsNullOrEmpty(exePath))
+                {
+                    WarningWindow.Show(
+                        _localization.GetString("Stalker2ExeNotFound") ?? "Stalker 2 executable not found. Please check the game installation path.",
+                        _localization.GetString("Error"),
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error
+                    );
+                    _logger.LogError("Stalker 2 executable not found in any expected location");
+                    return;
+                }
+
+                // Launch directly from folder
+                var gameDir = Path.GetDirectoryName(exePath);
+                var processStartInfo = new ProcessStartInfo
+                {
+                    FileName = exePath,
+                    WorkingDirectory = gameDir ?? targetPath,
+                    UseShellExecute = true
+                };
+
+                Process.Start(processStartInfo);
+                _logger.LogSuccess($"Launched Stalker 2: {exePath}");
+                StatusTextBlock.Text = _localization.GetString("LaunchingStalker2") ?? "Launching Stalker 2...";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Failed to launch Stalker 2", ex);
+                WarningWindow.Show(
+                    _localization.GetString("FailedToLaunchStalker2") ?? $"Failed to launch Stalker 2: {ex.Message}",
+                    _localization.GetString("Error"),
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
             }
         }
 

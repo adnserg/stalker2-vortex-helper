@@ -29,6 +29,9 @@
 
   <ItemGroup>
     <Content Include="images\icon.ico" />
+    <Content Include="images\stalker2.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <EmbeddedResource Include="Localization\localization.json" />
     <Content Include="HerbatasDLCModLoader\bin\repak.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
