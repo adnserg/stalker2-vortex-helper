@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -40,6 +41,10 @@ namespace Stalker2ModManager.Views
         private readonly List<ModInfo> _originalModsState = [];
         private bool _hasUnsavedChanges = false;
         private bool _isClosing = false;
+        
+        // Для отмены установки модов
+        private CancellationTokenSource? _installCancellationTokenSource;
+        private bool _isInstalling = false;
 
         public MainWindow()
         {
@@ -208,13 +213,80 @@ namespace Stalker2ModManager.Views
         private void BrowseTargetPath_Click(object sender, RoutedEventArgs e)
         {
             using var dialog = new FolderBrowserDialog();
-            dialog.Description = "Select ~mods folder";
+            dialog.Description = "Select game installation folder";
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                TargetPathTextBox.Text = dialog.SelectedPath;
-                _logger.LogInfo($"Target path selected: {dialog.SelectedPath}");
+                var selectedPath = dialog.SelectedPath;
+                if (!ValidateGamePath(selectedPath))
+                {
+                    WarningWindow.Show(
+                        _localization.GetString("InvalidGamePath") ?? "Selected path is not a valid Stalker 2 game directory. Please select the game installation folder.",
+                        _localization.GetString("Error"),
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning
+                    );
+                    return;
+                }
+                
+                TargetPathTextBox.Text = selectedPath;
+                _logger.LogInfo($"Target path selected: {selectedPath}");
                 CheckGameAvailability();
+                UpdateInstallButtonState();
             }
+        }
+
+        private void TargetPathTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            CheckGameAvailability();
+            UpdateInstallButtonState();
+        }
+
+        private void UpdateInstallButtonState()
+        {
+            if (InstallModsButton == null)
+            {
+                return;
+            }
+
+            // Проверяем, что путь валидный и моды загружены
+            bool isValidPath = !string.IsNullOrWhiteSpace(TargetPathTextBox.Text) && ValidateGamePath(TargetPathTextBox.Text);
+            bool hasMods = _mods != null && _mods.Count > 0;
+
+            InstallModsButton.IsEnabled = isValidPath && hasMods && !_isInstalling;
+        }
+
+        private static bool ValidateGamePath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path))
+            {
+                return false;
+            }
+
+            // Проверяем наличие игрового exe файла
+            var possibleExePaths = new[]
+            {
+                Path.Combine(path, "Stalker2", "Binaries", "Win64", "Stalker2-Win64-Shipping.exe"),
+                Path.Combine(path, "Stalker2", "Binaries", "Win64", "Stalker2.exe"),
+                Path.Combine(path, "Stalker2", "Binaries", "Win64", "Stalker2Game.exe"),
+                Path.Combine(path, "Stalker2-Win64-Shipping.exe"),
+                Path.Combine(path, "Stalker2.exe")
+            };
+
+            bool exeExists = false;
+            foreach (var exePath in possibleExePaths)
+            {
+                if (File.Exists(exePath))
+                {
+                    exeExists = true;
+                    break;
+                }
+            }
+
+            var gameContentPath = Path.Combine(path, "Stalker2", "Content");
+            // Также проверяем наличие структуры папок игры
+            bool gameFoldersExists = Directory.Exists(gameContentPath);
+
+            return exeExists && gameFoldersExists;
         }
 
         private void LoadMods_Click(object sender, RoutedEventArgs e)
@@ -273,8 +345,8 @@ namespace Stalker2ModManager.Views
                 // Сохраняем исходное состояние после загрузки модов
                 SaveOriginalModsState();
                 
-                // Включаем кнопку Install Mods если моды загружены
-                InstallModsButton.IsEnabled = _mods.Count > 0;
+                // Обновляем состояние кнопки Install Mods
+                UpdateInstallButtonState();
                 
                 UpdateStatus($"Loaded {mods.Count} mods");
                 _logger.LogSuccess($"Loaded {mods.Count} mods from path: {VortexPathTextBox.Text}");
@@ -548,6 +620,7 @@ namespace Stalker2ModManager.Views
                     VortexPathTextBox.Text = pathsConfig.VortexPath;
                     TargetPathTextBox.Text = pathsConfig.TargetPath;
                     CheckGameAvailability();
+                    UpdateInstallButtonState();
                 }
 
                 // Применяем порядок модов, если он загружен
@@ -556,8 +629,8 @@ namespace Stalker2ModManager.Views
                     // Применяем порядок к текущим модам
                     ApplyModsOrder(modsOrder);
                     
-                    // Включаем/выключаем кнопку Install Mods в зависимости от наличия модов
-                    InstallModsButton.IsEnabled = _mods.Count > 0;
+                    // Обновляем состояние кнопки Install Mods
+                    UpdateInstallButtonState();
                     
                     UpdateStatus($"Loaded mods order with {modsOrder.Mods.Count} mods");
                     _logger.LogSuccess($"Loaded mods order with {modsOrder.Mods.Count} mods");
@@ -590,6 +663,18 @@ namespace Stalker2ModManager.Views
                 return;
             }
 
+            // Проверяем валидность пути игры перед установкой
+            if (!ValidateGamePath(TargetPathTextBox.Text))
+            {
+                WarningWindow.Show(
+                    _localization.GetString("InvalidGamePath") ?? "Selected path is not a valid Stalker 2 game directory. Please select the game installation folder.",
+                    _localization.GetString("Error"),
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
+                return;
+            }
+
             var result = WarningWindow.Show(
                 _localization.GetString("InstallModsWarning"),
                 _localization.GetString("Warning"),
@@ -601,20 +686,51 @@ namespace Stalker2ModManager.Views
                 return;
             }
 
-            // Блокируем элемент управления установки
+            // Проверяем, идет ли уже установка
             var installMenuItem = sender as System.Windows.Controls.MenuItem;
             var installButton = sender as System.Windows.Controls.Button;
             
+            // Если установка идет, отменяем её
+            if (_isInstalling && _installCancellationTokenSource != null)
+            {
+                _installCancellationTokenSource.Cancel();
+                _logger.LogInfo("Installation cancelled by user");
+                
+                if (installMenuItem != null)
+                {
+                    installMenuItem.IsEnabled = true;
+                    installMenuItem.Header = "_" + _localization.GetString("InstallMods");
+                }
+                
+                if (installButton != null)
+                {
+                    installButton.IsEnabled = true;
+                    installButton.Content = _localization.GetString("InstallMods");
+                }
+                
+                _isInstalling = false;
+                ProgressBar.Visibility = Visibility.Collapsed;
+                ProgressTextBlock.Text = "";
+                UpdateStatus(_localization.GetString("InstallationCancelled") ?? "Installation cancelled");
+                UpdateInstallButtonState();
+                return;
+            }
+            
+            // Создаем CancellationTokenSource для отмены
+            _installCancellationTokenSource = new CancellationTokenSource();
+            _isInstalling = true;
+            
+            // Изменяем кнопку на Cancel
             if (installMenuItem != null)
             {
-                installMenuItem.IsEnabled = false;
-                installMenuItem.Header = "Installing...";
+                installMenuItem.IsEnabled = true;
+                installMenuItem.Header = "_" + _localization.GetString("Cancel");
             }
             
             if (installButton != null)
             {
-                installButton.IsEnabled = false;
-                installButton.Content = _localization.GetString("Installing");
+                installButton.IsEnabled = true;
+                installButton.Content = _localization.GetString("Cancel");
             }
 
             // Показываем прогресс-бар
@@ -635,11 +751,23 @@ namespace Stalker2ModManager.Views
                 var enabledModsCount = _mods.Count(m => m.IsEnabled);
                 _logger.LogInfo($"Starting mods installation. Target: {TargetPathTextBox.Text}, Enabled mods: {enabledModsCount}");
                 
-                await _modManagerService.InstallModsAsync([.. _mods], TargetPathTextBox.Text, progress);
+                await _modManagerService.InstallModsAsync([.. _mods], TargetPathTextBox.Text, progress, _installCancellationTokenSource.Token);
+
+                if (_installCancellationTokenSource.Token.IsCancellationRequested)
+                {
+                    UpdateStatus(_localization.GetString("InstallationCancelled") ?? "Installation cancelled");
+                    _logger.LogInfo("Installation was cancelled");
+                    return;
+                }
 
                 UpdateStatus($"Installed {enabledModsCount} mods");
                 _logger.LogSuccess($"Mods installed successfully. Installed {enabledModsCount} mods to {TargetPathTextBox.Text}");
                 WarningWindow.Show(_localization.GetString("ModsInstalledSuccess"), _localization.GetString("Success"), MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (OperationCanceledException)
+            {
+                UpdateStatus(_localization.GetString("InstallationCancelled") ?? "Installation cancelled");
+                _logger.LogInfo("Installation was cancelled");
             }
             catch (Exception ex)
             {
@@ -665,6 +793,13 @@ namespace Stalker2ModManager.Views
                 ProgressBar.Visibility = Visibility.Collapsed;
                 ProgressBar.Value = 0;
                 ProgressTextBlock.Text = "";
+                
+                _isInstalling = false;
+                _installCancellationTokenSource?.Dispose();
+                _installCancellationTokenSource = null;
+                
+                // Обновляем состояние кнопки после завершения установки
+                UpdateInstallButtonState();
             }
         }
 
@@ -885,8 +1020,8 @@ namespace Stalker2ModManager.Views
 
                     UpdateOrders();
                     
-                    // Включаем кнопку Install Mods если моды загружены
-                    InstallModsButton.IsEnabled = _mods.Count > 0;
+                    // Обновляем состояние кнопки Install Mods
+                    UpdateInstallButtonState();
                     
                     _logger.LogInfo($"Auto-loaded {mods.Count} mods from saved path: {pathsConfig.VortexPath}");
                 }
@@ -942,8 +1077,8 @@ namespace Stalker2ModManager.Views
                 SubscribeToModChanges(mod);
             }
             
-            // Включаем/выключаем кнопку Install Mods в зависимости от наличия модов
-            InstallModsButton.IsEnabled = _mods.Count > 0;
+            // Обновляем состояние кнопки Install Mods
+            UpdateInstallButtonState();
         }
 
         private void ExportOrder_Click(object sender, RoutedEventArgs e)
@@ -1120,31 +1255,7 @@ namespace Stalker2ModManager.Views
                 }
 
                 var targetPath = TargetPathTextBox.Text.Trim();
-                if (!Directory.Exists(targetPath))
-                {
-                    LaunchGameSection.Visibility = Visibility.Collapsed;
-                    return;
-                }
-
-                // Find executable
-                var possibleExePaths = new[]
-                {
-                    Path.Combine(targetPath, "Stalker2", "Binaries", "Win64", "Stalker2-Win64-Shipping.exe"),
-                    Path.Combine(targetPath, "Stalker2", "Binaries", "Win64", "Stalker2.exe"),
-                    Path.Combine(targetPath, "Stalker2", "Binaries", "Win64", "Stalker2Game.exe"),
-                    Path.Combine(targetPath, "Stalker2-Win64-Shipping.exe"),
-                    Path.Combine(targetPath, "Stalker2.exe")
-                };
-
-                bool gameFound = false;
-                foreach (var path in possibleExePaths)
-                {
-                    if (File.Exists(path))
-                    {
-                        gameFound = true;
-                        break;
-                    }
-                }
+                bool gameFound = ValidateGamePath(targetPath);
 
                 if (gameFound)
                 {
@@ -1572,8 +1683,8 @@ namespace Stalker2ModManager.Views
                 var fileName = System.IO.Path.GetFileName(jsonFilePath);
                 var fileType = System.IO.Path.GetExtension(jsonFilePath).Equals(".txt", StringComparison.CurrentCultureIgnoreCase) ? "TXT" : "JSON";
                 
-                // Включаем/выключаем кнопку Install Mods в зависимости от наличия модов
-                InstallModsButton.IsEnabled = _mods.Count > 0;
+                // Обновляем состояние кнопки Install Mods
+                UpdateInstallButtonState();
                 
                 UpdateStatus($"Sorted {_mods.Count} mods according to {fileName} ({fileType})");
                 _logger.LogSuccess($"Sorted {_mods.Count} mods according to {fileName} ({fileType}). Found {modOrderList.Count} mods in file");

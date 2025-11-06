@@ -645,11 +645,11 @@
                             </Grid.RowDefinitions>
 
                             <Label Grid.Row="0" Grid.Column="0" x:Name="VortexPathLabel" Content="Vortex Path:" VerticalAlignment="Center" Margin="0,5"/>
-                            <TextBox Grid.Row="0" Grid.Column="1" x:Name="VortexPathTextBox" VerticalContentAlignment="Center"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" x:Name="VortexPathTextBox" VerticalContentAlignment="Center" IsReadOnly="True"/>
                             <Button Grid.Row="0" Grid.Column="2" x:Name="BrowseVortexButton" Content="Browse..." Click="BrowseVortexPath_Click" Margin="5,0,0,0" Padding="10,0"/>
 
                             <Label Grid.Row="1" Grid.Column="0" x:Name="TargetPathLabel" Content="Target Path:" VerticalAlignment="Center" Margin="0,5"/>
-                            <TextBox Grid.Row="1" Grid.Column="1" x:Name="TargetPathTextBox" VerticalContentAlignment="Center"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" x:Name="TargetPathTextBox" VerticalContentAlignment="Center" IsReadOnly="True"/>
                             <Button Grid.Row="1" Grid.Column="2" x:Name="BrowseTargetButton" Content="Browse..." Click="BrowseTargetPath_Click" Margin="5,0,0,0" Padding="10,0"/>
                         </Grid>
                     </GroupBox>

@@ -58,7 +58,7 @@ namespace Stalker2ModManager.Services
             InstallModsAsync(mods, targetPath, null).Wait();
         }
 
-        public async Task InstallModsAsync(List<ModInfo> mods, string targetPath, IProgress<InstallProgress> progress)
+        public async Task InstallModsAsync(List<ModInfo> mods, string targetPath, IProgress<InstallProgress> progress, CancellationToken cancellationToken = default)
         {
             await Task.Run(async () =>
             {
@@ -116,6 +116,8 @@ namespace Stalker2ModManager.Services
                 // Копируем включенные моды в правильном порядке, копируя только измененные файлы
                 foreach (var mod in enabledMods)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    
                     var targetFolderName = mod.GetTargetFolderName();
                     var targetModPath = Path.Combine(modsFolderPath, targetFolderName);
 
