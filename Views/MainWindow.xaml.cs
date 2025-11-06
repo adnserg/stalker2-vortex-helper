@@ -2311,6 +2311,12 @@ namespace Stalker2ModManager.Views
                 
                 // Install Mods button
                 InstallModsButton.Content = _localization.GetString("InstallMods");
+                
+                // Launch Stalker 2 button
+                if (LaunchStalker2Button != null)
+                {
+                    LaunchStalker2Button.Content = _localization.GetString("LaunchStalker2");
+                }
 
                 // Column headers
 
