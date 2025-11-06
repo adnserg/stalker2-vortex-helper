@@ -203,6 +203,13 @@ namespace Stalker2ModManager.Views
         {
             using var dialog = new FolderBrowserDialog();
             dialog.Description = "Select Vortex mods folder";
+            
+            // Если путь уже задан и существует, открываем диалог в нём
+            if (!string.IsNullOrWhiteSpace(VortexPathTextBox.Text) && Directory.Exists(VortexPathTextBox.Text))
+            {
+                dialog.SelectedPath = VortexPathTextBox.Text;
+            }
+            
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 VortexPathTextBox.Text = dialog.SelectedPath;
@@ -214,6 +221,13 @@ namespace Stalker2ModManager.Views
         {
             using var dialog = new FolderBrowserDialog();
             dialog.Description = "Select game installation folder";
+            
+            // Если путь уже задан и существует, открываем диалог в нём
+            if (!string.IsNullOrWhiteSpace(TargetPathTextBox.Text) && Directory.Exists(TargetPathTextBox.Text))
+            {
+                dialog.SelectedPath = TargetPathTextBox.Text;
+            }
+            
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 var selectedPath = dialog.SelectedPath;
