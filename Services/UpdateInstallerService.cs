@@ -133,7 +133,7 @@ namespace Stalker2ModManager.Services
                             }
 
                             extractedEntries++;
-                            _logger.LogDebug($"Extracted: {entry.Key} ({extractedEntries}/{totalEntries})");
+                            _logger.LogInfo($"Extracted: {entry.Key} ({extractedEntries}/{totalEntries})");
                         }
                     }
                 }
@@ -154,9 +154,8 @@ namespace Stalker2ModManager.Services
             {
                 _logger.LogInfo("Preparing update installer");
 
-                var appPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-                var appDirectory = Path.GetDirectoryName(appPath);
-                var updaterExePath = Path.Combine(appDirectory, _updaterExeName);
+                // Сохраняем UpdateInstaller.exe в папку extracted
+                var updaterExePath = Path.Combine(_extractFolder, _updaterExeName);
                 
                 // Если UpdateInstaller.exe уже есть, используем его
                 if (File.Exists(updaterExePath))
@@ -170,6 +169,12 @@ namespace Stalker2ModManager.Services
                 _logger.LogInfo($"UpdateInstaller.exe not found. Downloading from server...");
                 var updaterUrl = _updateServerUrl + _updaterExeName;
                 progress?.Report(0);
+
+                // Убеждаемся, что папка extracted существует
+                if (!Directory.Exists(_extractFolder))
+                {
+                    Directory.CreateDirectory(_extractFolder);
+                }
 
                 try
                 {
@@ -239,7 +244,8 @@ namespace Stalker2ModManager.Services
                     appExeName = appExeName + ".exe";
                 }
                 
-                var updaterExePath = Path.Combine(appDirectory, _updaterExeName);
+                // Используем UpdateInstaller.exe из папки extracted
+                var updaterExePath = Path.Combine(_extractFolder, _updaterExeName);
                 
                 if (!File.Exists(updaterExePath))
                 {
