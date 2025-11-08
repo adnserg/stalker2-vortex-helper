@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
+using Microsoft.Win32;
 
 namespace UpdateInstaller
 {
@@ -17,6 +18,7 @@ namespace UpdateInstaller
         private int _waitTimeout = 30;
         private DispatcherTimer _updateTimer;
         private readonly Logger _logger;
+        private TaskCompletionSource<string?>? _pathSelectionTask;
 
         public MainWindow()
         {
@@ -67,6 +69,7 @@ namespace UpdateInstaller
                     return;
                 }
 
+                // Проверяем папку extracted
                 if (!Directory.Exists(_extractFolder))
                 {
                     _logger.LogError($"Extract folder does not exist: {_extractFolder}");
@@ -92,9 +95,51 @@ namespace UpdateInstaller
                 var appExePath = Path.Combine(_appDirectory, appExeNameFixed);
                 if (!File.Exists(appExePath))
                 {
-                    _logger.LogError($"Application executable not found: {appExePath}");
-                    UpdateUI(() => ShowError($"Application executable not found: {appExePath}"));
-                    return;
+                    _logger.LogWarning($"Application executable not found: {appExePath}, requesting user to select path");
+                    
+                    // Сначала показываем пользователю сообщение о том, что нужно указать путь
+                    UpdateUI(() =>
+                    {
+                        StatusTextBlock.Text = "Application path not found";
+                        StatusTextBlock.Foreground = System.Windows.Media.Brushes.Orange;
+                        ProgressBar.Value = 0;
+                        ProgressTextBlock.Text = "0%";
+                        DetailsTextBlock.Text = "The application path was not found. Please specify the path manually.";
+                        DetailsTextBlock.Foreground = System.Windows.Media.Brushes.White;
+                        FooterTextBlock.Text = "Click the button below to select the application executable file.";
+                        SelectPathButton.Visibility = Visibility.Visible;
+                    });
+                    
+                    // Ждем, пока пользователь выберет путь через кнопку
+                    _pathSelectionTask = new TaskCompletionSource<string?>();
+                    string? selectedPath = await _pathSelectionTask.Task;
+                    
+                    // Скрываем кнопку
+                    UpdateUI(() => SelectPathButton.Visibility = Visibility.Collapsed);
+                    
+                    if (string.IsNullOrEmpty(selectedPath) || !File.Exists(selectedPath))
+                    {
+                        _logger.LogError("User did not select a valid application path");
+                        UpdateUI(() => ShowError("Please select the application executable to update."));
+                        return;
+                    }
+                    
+                    // Обновляем путь к приложению
+                    appExePath = selectedPath;
+                    _appDirectory = Path.GetDirectoryName(selectedPath);
+                    appExeNameFixed = Path.GetFileName(selectedPath);
+                    
+                    _logger.LogInfo($"User selected application path: {appExePath}");
+                    
+                    // Обновляем UI для продолжения обновления
+                    UpdateUI(() =>
+                    {
+                        StatusTextBlock.Text = "Application found";
+                        StatusTextBlock.Foreground = System.Windows.Media.Brushes.White;
+                        DetailsTextBlock.Text = "Proceeding with update...";
+                        DetailsTextBlock.Foreground = System.Windows.Media.Brushes.White;
+                        FooterTextBlock.Text = "Please wait while the update is being installed...";
+                    });
                 }
                 
                 _logger.LogInfo($"Using executable path: {appExePath}");
@@ -407,6 +452,47 @@ del ""%~f0"" >nul 2>&1";
         {
             _logger.LogInfo("UpdateInstaller closed by user");
             Close();
+        }
+
+        private void SelectPathButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var appExeNameFixed = _appExeName;
+                if (appExeNameFixed.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                {
+                    appExeNameFixed = Path.GetFileNameWithoutExtension(appExeNameFixed) + ".exe";
+                }
+                else if (!appExeNameFixed.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                {
+                    appExeNameFixed = appExeNameFixed + ".exe";
+                }
+
+                var openFileDialog = new OpenFileDialog
+                {
+                    Title = "Select Application Executable",
+                    Filter = "Executable files (*.exe)|*.exe|All files (*.*)|*.*",
+                    FileName = appExeNameFixed,
+                    InitialDirectory = _appDirectory
+                };
+
+                if (openFileDialog.ShowDialog() == true)
+                {
+                    var selectedPath = openFileDialog.FileName;
+                    _logger.LogInfo($"User selected path: {selectedPath}");
+                    _pathSelectionTask?.SetResult(selectedPath);
+                }
+                else
+                {
+                    _logger.LogInfo("User cancelled path selection");
+                    _pathSelectionTask?.SetResult(null);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error in SelectPathButton_Click", ex);
+                _pathSelectionTask?.SetResult(null);
+            }
         }
     }
 }

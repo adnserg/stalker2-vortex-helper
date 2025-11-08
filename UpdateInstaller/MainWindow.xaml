@@ -64,7 +64,7 @@
     </Window.Resources>
 
     <Border BorderBrush="#FF007ACC" BorderThickness="2" CornerRadius="8">
-        <Grid Margin="30">
+        <Grid Margin="30,30,30,8">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
@@ -124,6 +124,14 @@
                           TextAlignment="Center"
                           TextWrapping="Wrap"
                           MaxHeight="100"/>
+                
+                <Button x:Name="SelectPathButton" 
+                        Content="Select Application Path" 
+                        Margin="0,20,0,0"
+                        HorizontalAlignment="Center"
+                        Padding="15,8"
+                        Visibility="Collapsed"
+                        Click="SelectPathButton_Click"/>
             </StackPanel>
 
             <!-- Footer -->
@@ -134,7 +142,7 @@
                       FontSize="11"
                       Margin="0,20,0,0"
                       TextAlignment="Center"
-                      TextWrapping="Wrap"/>
+                      TextWrapping="Wrap" VerticalAlignment="Top"/>
 
             <!-- Icon/Animation -->
             <Grid Grid.Row="3" Margin="0,20,0,0" HorizontalAlignment="Center">
