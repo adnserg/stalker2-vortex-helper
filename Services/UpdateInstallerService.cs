@@ -227,11 +227,29 @@ namespace Stalker2ModManager.Services
         {
             try
             {
-                var appPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+                // Получаем путь к приложению
+                // Environment.ProcessPath возвращает реальный путь к исполняемому файлу,
+                // а не путь к временной папке .net (где .NET распаковывает single-file приложения)
+                string appPath = Environment.ProcessPath;
+                
+                if (string.IsNullOrEmpty(appPath) || !File.Exists(appPath))
+                {
+                    // Fallback на старый способ, если ProcessPath недоступен
+                    appPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+                    _logger.LogWarning($"Environment.ProcessPath not available, using Assembly.Location: {appPath}");
+                }
+                
                 var appDirectory = Path.GetDirectoryName(appPath);
                 
+                if (string.IsNullOrEmpty(appDirectory))
+                {
+                    _logger.LogError("Failed to determine application directory");
+                    return false;
+                }
+                
+                _logger.LogInfo($"Application path: {appPath}, Directory: {appDirectory}");
+                
                 // Определяем имя exe файла
-                // В режиме отладки может быть .dll, но нам нужно .exe
                 var appExeName = Path.GetFileName(appPath);
                 if (appExeName.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
                 {
