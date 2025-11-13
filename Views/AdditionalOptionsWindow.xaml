@@ -1,7 +1,7 @@
 <Window x:Class="Stalker2ModManager.Views.AdditionalOptionsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Additional Options" Height="450" Width="500"
+        Title="Additional Options" Height="550" Width="500"
         Background="#FF1E1E1E" WindowStyle="None" AllowsTransparency="True"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
     <Window.Resources>
@@ -78,7 +78,8 @@
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,0,0,15">
                 <StackPanel>
                     <!-- Mod Order Options -->
-                    <TextBlock Text="Mod Order" 
+                    <TextBlock x:Name="ModOrderHeader" 
+                               Text="Mod Order" 
                                FontSize="14" 
                                FontWeight="Bold"
                                Foreground="#FFFFFFFF"
@@ -125,7 +126,8 @@
                              Unchecked="ConsiderModVersionCheckBox_Unchecked"/>
                     
                     <!-- Settings -->
-                    <TextBlock Text="Settings" 
+                    <TextBlock x:Name="SettingsHeader" 
+                               Text="Settings" 
                                FontSize="14" 
                                FontWeight="Bold"
                                Foreground="#FFFFFFFF"
@@ -138,21 +140,49 @@
                              Unchecked="ValidateGamePathCheckBox_Unchecked"/>
                     
                     <!-- Localization -->
-                    <TextBlock Text="Localization" 
+                    <TextBlock x:Name="LocalizationHeader" 
+                               Text="Localization" 
                                FontSize="14" 
                                FontWeight="Bold"
                                Foreground="#FFFFFFFF"
                                Margin="0,10,0,10"/>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <StackPanel Orientation="Vertical" Margin="0,0,0,10">
                         <Button x:Name="LoadCustomLocalizationButton" 
                                 Content="Load Custom Localization..." 
                                 Click="LoadCustomLocalization_Click"
-                                Padding="10,5"
-                                Margin="0,0,5,0"/>
+                                Padding="10,5" HorizontalAlignment="Left"/>
                         <Button x:Name="ResetLocalizationButton" 
                                 Content="Reset to Default Localization" 
                                 Click="ResetLocalization_Click"
-                                Padding="10,5"/>
+                                Padding="10,5" Cursor="Hand" HorizontalAlignment="Left" Margin="0,5,0,0"/>
+                    </StackPanel>
+                    
+                    <!-- Quick Access -->
+                    <TextBlock x:Name="QuickAccessHeader" 
+                               Text="Quick Access" 
+                               FontSize="14" 
+                               FontWeight="Bold"
+                               Foreground="#FFFFFFFF"
+                               Margin="0,10,0,10"/>
+                    <StackPanel Margin="0,0,0,10">
+                        <Button x:Name="OpenAppFolderButton" 
+                                Content="Open Application Folder" 
+                                Click="OpenAppFolder_Click"
+                                Padding="10,5"
+                                Margin="0,0,0,5"
+                                HorizontalAlignment="Left"/>
+                        <Button x:Name="OpenGameRootButton" 
+                                Content="Open Stalker 2 Root Folder" 
+                                Click="OpenGameRoot_Click"
+                                Padding="10,5"
+                                Margin="0,0,0,5"
+                                HorizontalAlignment="Left"/>
+                        <Button x:Name="OpenModsFolderButton" 
+                                Content="Open ~mods Folder" 
+                                Click="OpenModsFolder_Click"
+                                Padding="10,5"
+                                Margin="0,0,0,5"
+                                HorizontalAlignment="Left"/>
                     </StackPanel>
                 </StackPanel>
             </ScrollViewer>

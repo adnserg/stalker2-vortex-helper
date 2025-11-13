@@ -171,10 +171,41 @@ namespace Stalker2ModManager.Services
                 }
 
                 File.Copy(sourcePakPath, destinationPakPath, true);
+                
+                // Удаляем временную папку после успешного выполнения
+                try
+                {
+                    if (Directory.Exists(tempFolderPath))
+                    {
+                        Directory.Delete(tempFolderPath, true);
+                        Logger.Instance.LogInfo($"Temporary folder deleted successfully: {tempFolderPath}");
+                    }
+                }
+                catch (Exception deleteEx)
+                {
+                    Logger.Instance.LogError("Error deleting temporary folder after successful run", deleteEx);
+                }
+                
                 return RunResult.Ok(destinationPakPath, output);
             }
             catch (Exception ex)
             {
+                // Пытаемся удалить временную папку даже при ошибке
+                try
+                {
+                    var tempFolderPath = Path.Combine(Path.GetFullPath(Path.GetTempPath()), "HerbatasDLCModLoader");
+                    if (Directory.Exists(tempFolderPath))
+                    {
+                        Directory.Delete(tempFolderPath, true);
+                        Logger.Instance.LogInfo($"Temporary folder deleted after error: {tempFolderPath}");
+                    }
+                }
+                catch (Exception deleteEx)
+                {
+                    Logger.Instance.LogError("Error deleting temporary folder after exception", deleteEx);
+                }
+                
+                Logger.Instance.LogError("Error in HerbatasDLCModLoaderRunner.Run", ex);
                 return RunResult.Fail(ex.Message);
             }
         }

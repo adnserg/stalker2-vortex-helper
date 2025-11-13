@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Forms;
@@ -13,10 +14,12 @@ namespace Stalker2ModManager.Views
         public bool ConsiderModVersion { get; private set; }
         public bool ValidateGamePathEnabled { get; private set; }
         public bool LocalizationChanged { get; private set; }
+        private readonly string _targetPath;
 
-        public AdditionalOptionsWindow()
+        public AdditionalOptionsWindow(string targetPath = "")
         {
             InitializeComponent();
+            _targetPath = targetPath;
             // Initialize settings from config
             var configService = new ConfigService();
             var cfg = configService.LoadPathsConfig();
@@ -45,6 +48,39 @@ namespace Stalker2ModManager.Views
                 LoadCustomLocalizationButton.Content = LocalizationService.Instance.GetString("LoadCustomLocalization");
             if (ResetLocalizationButton != null)
                 ResetLocalizationButton.Content = LocalizationService.Instance.GetString("ResetLocalization");
+            
+            // Localize Quick Access section
+            var localization = LocalizationService.Instance;
+            if (OpenAppFolderButton != null)
+                OpenAppFolderButton.Content = localization.GetString("OpenApplicationFolder");
+            if (OpenGameRootButton != null)
+            {
+                OpenGameRootButton.Content = localization.GetString("OpenStalker2RootFolder");
+                OpenGameRootButton.IsEnabled = !string.IsNullOrWhiteSpace(_targetPath);
+            }
+            if (OpenModsFolderButton != null)
+            {
+                OpenModsFolderButton.Content = localization.GetString("OpenModsFolder");
+                OpenModsFolderButton.IsEnabled = !string.IsNullOrWhiteSpace(_targetPath);
+            }
+            
+            // Localize section headers
+            UpdateLocalization();
+        }
+        
+        private void UpdateLocalization()
+        {
+            var localization = LocalizationService.Instance;
+            if (ModOrderHeader != null)
+                ModOrderHeader.Text = localization.GetString("ModOrder");
+            if (SettingsHeader != null)
+                SettingsHeader.Text = localization.GetString("Settings");
+            if (LocalizationHeader != null)
+                LocalizationHeader.Text = localization.GetString("Localization");
+            if (QuickAccessHeader != null)
+                QuickAccessHeader.Text = localization.GetString("QuickAccess");
+            if (ValidateGamePathCheckBox != null)
+                ValidateGamePathCheckBox.Content = localization.GetString("ValidateGamePath");
         }
 
         private void SortBySnapshotCheckBox_Checked(object sender, RoutedEventArgs e)
@@ -226,6 +262,130 @@ namespace Stalker2ModManager.Views
             if (e.ChangedButton == System.Windows.Input.MouseButton.Left)
             {
                 DragMove();
+            }
+        }
+
+        private void OpenAppFolder_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var appPath = Environment.ProcessPath;
+                if (string.IsNullOrEmpty(appPath) || !File.Exists(appPath))
+                {
+                    appPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+                }
+                
+                var appDirectory = Path.GetDirectoryName(appPath);
+                if (!string.IsNullOrEmpty(appDirectory) && Directory.Exists(appDirectory))
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = appDirectory,
+                        UseShellExecute = true
+                    });
+                }
+                else
+                {
+                    var localization = LocalizationService.Instance;
+                    WarningWindow.Show(
+                        "Application folder not found",
+                        localization.GetString("Error"),
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                var localization = LocalizationService.Instance;
+                WarningWindow.Show(
+                    $"Error opening application folder: {ex.Message}",
+                    localization.GetString("Error"),
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void OpenGameRoot_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(_targetPath))
+                {
+                    var localization = LocalizationService.Instance;
+                    WarningWindow.Show(
+                        "Game path is not set. Please set the Target Path in the main window.",
+                        localization.GetString("Error"),
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (Directory.Exists(_targetPath))
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = _targetPath,
+                        UseShellExecute = true
+                    });
+                }
+                else
+                {
+                    var localization = LocalizationService.Instance;
+                    WarningWindow.Show(
+                        "Game folder not found. Please check the Target Path in the main window.",
+                        localization.GetString("Error"),
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                var localization = LocalizationService.Instance;
+                WarningWindow.Show(
+                    $"Error opening game folder: {ex.Message}",
+                    localization.GetString("Error"),
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void OpenModsFolder_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(_targetPath))
+                {
+                    var localization = LocalizationService.Instance;
+                    WarningWindow.Show(
+                        "Game path is not set. Please set the Target Path in the main window.",
+                        localization.GetString("Error"),
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+
+                var modsFolderPath = Path.Combine(_targetPath, "Stalker2", "Content", "Paks", "~mods");
+                
+                // Создаем папку, если её нет
+                if (!Directory.Exists(modsFolderPath))
+                {
+                    Directory.CreateDirectory(modsFolderPath);
+                }
+
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = modsFolderPath,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                var localization = LocalizationService.Instance;
+                WarningWindow.Show(
+                    $"Error opening mods folder: {ex.Message}",
+                    localization.GetString("Error"),
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
         }
     }

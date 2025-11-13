@@ -1494,7 +1494,7 @@ namespace Stalker2ModManager.Views
         private void Advanced_Click(object sender, RoutedEventArgs e)
         {
             _logger.LogDebug("Advanced options window opened");
-            var optionsWindow = new AdditionalOptionsWindow
+            var optionsWindow = new AdditionalOptionsWindow(TargetPathTextBox.Text)
             {
                 Owner = this
             };

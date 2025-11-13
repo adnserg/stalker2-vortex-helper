@@ -108,7 +108,14 @@
     "DlcModLoaderAuthor": "Author: ",
     "DlcModLoaderGitHubTooltip": "GitHub Repository",
     "DlcModLoaderNexusTooltip": "Nexus Mods",
-    "ConsiderModVersion": "Consider mod versions when matching order"
+    "ConsiderModVersion": "Consider mod versions when matching order",
+    "ModOrder": "Mod Order",
+    "Localization": "Localization",
+    "QuickAccess": "Quick Access",
+    "OpenApplicationFolder": "Open Application Folder",
+    "OpenStalker2RootFolder": "Open Stalker 2 Root Folder",
+    "OpenModsFolder": "Open ~mods Folder",
+    "ValidateGamePath": "Validate game path"
   },
   "ru": {
     "WindowTitle": "Менеджер модов S.T.A.L.K.E.R. 2",
@@ -219,7 +226,14 @@
     "DlcModLoaderAuthor": "Автор: ",
     "DlcModLoaderGitHubTooltip": "Репозиторий GitHub",
     "DlcModLoaderNexusTooltip": "Nexus Mods",
-    "ConsiderModVersion": "Учитывать версии модов при сопоставлении порядка"
+    "ConsiderModVersion": "Учитывать версии модов при сопоставлении порядка",
+    "ModOrder": "Порядок модов",
+    "Localization": "Локализация",
+    "QuickAccess": "Быстрый доступ",
+    "OpenApplicationFolder": "Открыть папку приложения",
+    "OpenStalker2RootFolder": "Открыть корневую папку Stalker 2",
+    "OpenModsFolder": "Открыть папку ~mods",
+    "ValidateGamePath": "Проверять путь к игре"
   },
   "fr": {
     "WindowTitle": "Gestionnaire de mods S.T.A.L.K.E.R. 2",
@@ -317,7 +331,14 @@
     "DlcModLoaderAuthor": "Auteur: ",
     "DlcModLoaderGitHubTooltip": "Dépôt GitHub",
     "DlcModLoaderNexusTooltip": "Nexus Mods",
-    "ConsiderModVersion": "Consider mod versions when matching order"
+    "ConsiderModVersion": "Consider mod versions when matching order",
+    "ModOrder": "Ordre des mods",
+    "Localization": "Localisation",
+    "QuickAccess": "Accès rapide",
+    "OpenApplicationFolder": "Ouvrir le dossier de l'application",
+    "OpenStalker2RootFolder": "Ouvrir le dossier racine de Stalker 2",
+    "OpenModsFolder": "Ouvrir le dossier ~mods",
+    "ValidateGamePath": "Valider le chemin du jeu"
   }
 }
 
