@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
@@ -9,6 +10,10 @@ namespace Stalker2ModManager.Models
         private string _name = string.Empty;
         private bool _isEnabled = true;
         private int _order;
+        
+        // Словарь для хранения информации о включенных/отключенных файлах
+        // Ключ - относительный путь файла от SourcePath, значение - включен ли файл
+        private Dictionary<string, bool> _fileStates = new Dictionary<string, bool>();
 
         public string SourcePath
         {
@@ -52,6 +57,16 @@ namespace Stalker2ModManager.Models
             }
         }
 
+        public Dictionary<string, bool> FileStates
+        {
+            get => _fileStates;
+            set
+            {
+                _fileStates = value ?? new Dictionary<string, bool>();
+                OnPropertyChanged(nameof(FileStates));
+            }
+        }
+
         public string TargetFolderName
         {
             get => GetTargetFolderName();
@@ -85,6 +100,27 @@ namespace Stalker2ModManager.Models
                 // BAA и далее (порядки 676+)
                 return $"{(char)('A' + firstLetter)}{(char)('A' + secondLetter)}{(char)('A' + thirdLetter)}";
             }
+        }
+
+        /// <summary>
+        /// Проверяет, включен ли файл. Если файл не в словаре, возвращает true (по умолчанию включен).
+        /// </summary>
+        public bool IsFileEnabled(string relativePath)
+        {
+            if (_fileStates.TryGetValue(relativePath, out bool isEnabled))
+            {
+                return isEnabled;
+            }
+            return true; // По умолчанию все файлы включены
+        }
+
+        /// <summary>
+        /// Устанавливает состояние файла (включен/отключен).
+        /// </summary>
+        public void SetFileEnabled(string relativePath, bool isEnabled)
+        {
+            _fileStates[relativePath] = isEnabled;
+            OnPropertyChanged(nameof(FileStates));
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

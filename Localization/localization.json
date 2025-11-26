@@ -115,7 +115,11 @@
     "OpenApplicationFolder": "Open Application Folder",
     "OpenStalker2RootFolder": "Open Stalker 2 Root Folder",
     "OpenModsFolder": "Open ~mods Folder",
-    "ValidateGamePath": "Validate game path"
+    "ValidateGamePath": "Validate game path",
+    "ModFiles": "Mod Files",
+    "SelectAll": "Select All",
+    "DeselectAll": "Deselect All",
+    "OpenModFiles": "Open Mod Files"
   },
   "ru": {
     "WindowTitle": "Менеджер модов S.T.A.L.K.E.R. 2",
@@ -233,7 +237,11 @@
     "OpenApplicationFolder": "Открыть папку приложения",
     "OpenStalker2RootFolder": "Открыть корневую папку Stalker 2",
     "OpenModsFolder": "Открыть папку ~mods",
-    "ValidateGamePath": "Проверять путь к игре"
+    "ValidateGamePath": "Проверять путь к игре",
+    "ModFiles": "Файлы мода",
+    "SelectAll": "Выбрать все",
+    "DeselectAll": "Снять выбор",
+    "OpenModFiles": "Открыть файлы мода"
   },
   "fr": {
     "WindowTitle": "Gestionnaire de mods S.T.A.L.K.E.R. 2",

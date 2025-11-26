@@ -96,8 +96,8 @@ namespace Stalker2ModManager.Services
                     var targetModPath = Path.Combine(modsFolderPath, targetFolderName);
                     requiredDirectories.Add(targetModPath);
                     
-                    // Собираем все файлы, которые должны быть скопированы из этого мода
-                    CollectFiles(mod.SourcePath, targetModPath, requiredFiles);
+                    // Собираем все файлы, которые должны быть скопированы из этого мода (только включенные)
+                    CollectFiles(mod.SourcePath, targetModPath, requiredFiles, mod, mod.SourcePath);
                 }
 
                 // Удаляем папки, которых нет в списке включенных модов
@@ -139,8 +139,11 @@ namespace Stalker2ModManager.Services
 
                     _logger.LogInfo($"Processing mod [{installed}/{total}]: {mod.Name} -> {targetFolderName}");
 
-                    // Копируем только измененные файлы
-                    int copiedCount = await CopyDirectoryAsync(mod.SourcePath, targetModPath, true);
+                    // Копируем только измененные файлы (только включенные)
+                    int copiedCount = await CopyDirectoryAsync(mod.SourcePath, targetModPath, true, mod, mod.SourcePath);
+                    
+                    // Удаляем отключенные файлы, если они есть в целевой папке
+                    await RemoveDisabledFilesAsync(mod.SourcePath, targetModPath, mod);
                     
                     if (copiedCount > 0)
                     {
@@ -161,16 +164,29 @@ namespace Stalker2ModManager.Services
             CopyDirectoryAsync(sourceDir, targetDir).Wait();
         }
 
-        private void CollectFiles(string sourceDir, string targetDir, HashSet<string> fileSet)
+        private void CollectFiles(string sourceDir, string targetDir, HashSet<string> fileSet, ModInfo? mod = null, string? baseSourceDir = null)
         {
             try
             {
                 if (!Directory.Exists(sourceDir)) return;
+                
+                // Используем baseSourceDir для правильного вычисления относительных путей
+                if (baseSourceDir == null)
+                {
+                    baseSourceDir = sourceDir;
+                }
 
                 var files = Directory.GetFiles(sourceDir);
                 foreach (var file in files)
                 {
-                    var relativePath = Path.GetRelativePath(sourceDir, file);
+                    var relativePath = Path.GetRelativePath(baseSourceDir, file);
+                    
+                    // Проверяем, включен ли файл (если mod указан)
+                    if (mod != null && !mod.IsFileEnabled(relativePath))
+                    {
+                        continue; // Пропускаем отключенные файлы
+                    }
+                    
                     var targetFilePath = Path.Combine(targetDir, relativePath);
                     fileSet.Add(targetFilePath);
                 }
@@ -180,7 +196,7 @@ namespace Stalker2ModManager.Services
                 {
                     var dirName = Path.GetFileName(dir);
                     var targetSubDir = Path.Combine(targetDir, dirName);
-                    CollectFiles(dir, targetSubDir, fileSet);
+                    CollectFiles(dir, targetSubDir, fileSet, mod, baseSourceDir);
                 }
             }
             catch (Exception ex)
@@ -189,13 +205,19 @@ namespace Stalker2ModManager.Services
             }
         }
 
-        private async Task<int> CopyDirectoryAsync(string sourceDir, string targetDir, bool skipExisting = false)
+        private async Task<int> CopyDirectoryAsync(string sourceDir, string targetDir, bool skipExisting = false, ModInfo? mod = null, string? baseSourceDir = null)
         {
             int copiedCount = 0;
             
             await Task.Run(async () =>
             {
                 Directory.CreateDirectory(targetDir);
+                
+                // Используем baseSourceDir для правильного вычисления относительных путей
+                if (baseSourceDir == null)
+                {
+                    baseSourceDir = sourceDir;
+                }
 
                 // Копируем файлы
                 var files = Directory.GetFiles(sourceDir);
@@ -203,6 +225,14 @@ namespace Stalker2ModManager.Services
                 {
                     await Task.Run(() =>
                     {
+                        var relativePath = Path.GetRelativePath(baseSourceDir, file);
+                        
+                        // Проверяем, включен ли файл (если mod указан)
+                        if (mod != null && !mod.IsFileEnabled(relativePath))
+                        {
+                            return; // Пропускаем отключенные файлы
+                        }
+                        
                         var fileName = Path.GetFileName(file);
                         var targetFilePath = Path.Combine(targetDir, fileName);
                         
@@ -226,11 +256,64 @@ namespace Stalker2ModManager.Services
                 {
                     var dirName = Path.GetFileName(dir);
                     var targetSubDir = Path.Combine(targetDir, dirName);
-                    copiedCount += await CopyDirectoryAsync(dir, targetSubDir, skipExisting);
+                    copiedCount += await CopyDirectoryAsync(dir, targetSubDir, skipExisting, mod, baseSourceDir);
                 }
             });
             
             return copiedCount;
+        }
+        
+        private async Task RemoveDisabledFilesAsync(string sourceDir, string targetDir, ModInfo mod)
+        {
+            await Task.Run(async () =>
+            {
+                try
+                {
+                    if (!Directory.Exists(targetDir)) return;
+
+                    // Получаем все файлы в целевой папке
+                    var targetFiles = Directory.GetFiles(targetDir, "*", SearchOption.AllDirectories);
+                    
+                    foreach (var targetFile in targetFiles)
+                    {
+                        // Получаем относительный путь от целевой папки
+                        var relativePath = Path.GetRelativePath(targetDir, targetFile);
+                        
+                        // Получаем соответствующий исходный файл
+                        var sourceFile = Path.Combine(sourceDir, relativePath);
+                        
+                        // Если исходный файл существует, проверяем, включен ли он
+                        if (File.Exists(sourceFile))
+                        {
+                            // Вычисляем относительный путь от базовой папки мода для проверки состояния
+                            var relativePathFromModBase = Path.GetRelativePath(sourceDir, sourceFile);
+                            
+                            // Если файл отключен, удаляем его из целевой папки
+                            if (!mod.IsFileEnabled(relativePathFromModBase))
+                            {
+                                try
+                                {
+                                    var fileInfo = new FileInfo(targetFile);
+                                    if (fileInfo.Exists)
+                                    {
+                                        fileInfo.Attributes = FileAttributes.Normal;
+                                        File.Delete(targetFile);
+                                        _logger.LogDebug($"Removed disabled file: {relativePathFromModBase}");
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogError($"Failed to remove disabled file: {targetFile}", ex);
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Error removing disabled files from {targetDir}: {ex.Message}", ex);
+                }
+            });
         }
 
         private bool AreFilesIdentical(string sourceFile, string targetFile)

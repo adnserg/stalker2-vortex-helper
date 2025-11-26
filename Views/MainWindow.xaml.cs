@@ -348,6 +348,11 @@ namespace Stalker2ModManager.Views
                     {
                         mod.Order = orderItem.Order;
                         mod.IsEnabled = orderItem.IsEnabled;
+                        // Восстанавливаем состояния файлов
+                        if (orderItem.FileStates != null && orderItem.FileStates.Count > 0)
+                        {
+                            mod.FileStates = new Dictionary<string, bool>(orderItem.FileStates);
+                        }
                     }
                     else
                     {
@@ -1292,6 +1297,11 @@ namespace Stalker2ModManager.Views
                     {
                         mod.Order = orderItem.Order;
                         mod.IsEnabled = orderItem.IsEnabled;
+                        // Восстанавливаем состояния файлов
+                        if (orderItem.FileStates != null && orderItem.FileStates.Count > 0)
+                        {
+                            mod.FileStates = new Dictionary<string, bool>(orderItem.FileStates);
+                        }
                     }
                 }
 
@@ -2549,6 +2559,52 @@ namespace Stalker2ModManager.Views
             MarkAsChanged();
         }
 
+        private void ModsListBox_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (ModsListBox.SelectedItem is ModInfo selectedMod)
+            {
+                OpenModFilesWindow(selectedMod);
+            }
+        }
+
+        private void OpenModFiles_Click(object sender, RoutedEventArgs e)
+        {
+            if (ModsListBox.SelectedItem is ModInfo selectedMod)
+            {
+                OpenModFilesWindow(selectedMod);
+            }
+        }
+
+        private void ModsListBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            // Обновляем состояние кнопки открытия файлов мода
+            if (OpenModFilesButton != null)
+            {
+                OpenModFilesButton.IsEnabled = ModsListBox.SelectedItem is ModInfo;
+            }
+        }
+
+        private void OpenModFilesWindow(ModInfo mod)
+        {
+            try
+            {
+                var window = new ModFilesWindow(mod)
+                {
+                    Owner = this
+                };
+                window.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error opening mod files window: {ex.Message}", ex);
+                WarningWindow.Show(
+                    $"Error opening mod files: {ex.Message}",
+                    _localization.GetString("Error"),
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
         // Window management handlers
         private void TitleBar_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
@@ -2714,6 +2770,8 @@ namespace Stalker2ModManager.Views
                 ModsGroupBox.Header = _localization.GetString("Mods");
                 
                 // Move buttons
+                if (OpenModFilesButton != null)
+                    OpenModFilesButton.Content = _localization.GetString("OpenModFiles");
                 MoveUpButton.Content = _localization.GetString("MoveUp");
                 MoveDownButton.Content = _localization.GetString("MoveDown");
                 

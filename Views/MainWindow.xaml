@@ -747,6 +747,8 @@
                             Drop="ModsListBox_Drop"
                             AllowDrop="True"
                             DragOver="ModsListBox_DragOver"
+                            MouseDoubleClick="ModsListBox_MouseDoubleClick"
+                            SelectionChanged="ModsListBox_SelectionChanged"
                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                             ScrollViewer.VerticalScrollBarVisibility="Auto">
                                         <ListBox.ItemTemplate>
@@ -790,6 +792,7 @@
                                 </Grid.RowDefinitions>
                                 
                                 <StackPanel Grid.Row="0" Orientation="Vertical" VerticalAlignment="Top">
+                                    <Button x:Name="OpenModFilesButton" Content="Open Mod Files" Click="OpenModFiles_Click" Margin="0,0,0,5" Width="120" IsEnabled="False"/>
                                     <Button x:Name="MoveUpButton" Content="↑ Move Up" Click="MoveUp_Click" Margin="0,0,0,5" Width="120"/>
                                     <Button x:Name="MoveDownButton" Content="↓ Move Down" Click="MoveDown_Click" Margin="0,0,0,0" Width="120"/>
 

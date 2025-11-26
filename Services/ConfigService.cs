@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
@@ -117,7 +118,8 @@ namespace Stalker2ModManager.Services
                 {
                     Name = mod.Name,
                     Order = mod.Order,
-                    IsEnabled = mod.IsEnabled
+                    IsEnabled = mod.IsEnabled,
+                    FileStates = new Dictionary<string, bool>(mod.FileStates)
                 });
             }
             return order;

@@ -12,6 +12,7 @@ namespace Stalker2ModManager.Models
         public string Name { get; set; } = string.Empty;
         public int Order { get; set; }
         public bool IsEnabled { get; set; } = true;
+        public Dictionary<string, bool> FileStates { get; set; } = new Dictionary<string, bool>();
     }
 }
 
