@@ -780,11 +780,23 @@
                                               VerticalAlignment="Center"
                                               ToolTip="Some files are disabled"
                                               Visibility="{Binding HasDisabledFiles, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                                    <TextBlock Grid.Column="3" Text="{Binding DisplayName}" 
-                                              Foreground="#FFFFFFFF"
-                                              FontSize="12"
-                                              Margin="5,0,0,0"
-                                              VerticalAlignment="Center"/>
+                                                    <StackPanel Grid.Column="3"
+                                                                Orientation="Horizontal"
+                                                                VerticalAlignment="Center"
+                                                                Margin="5,0,0,0">
+                                                        <TextBlock Text="{Binding DisplayName}" 
+                                                                   Foreground="#FFFFFFFF"
+                                                                   FontSize="12"
+                                                                   VerticalAlignment="Center"/>
+                                                        <!-- Индикатор того, что у мода есть несколько версий -->
+                                                        <TextBlock Text="⧉"
+                                                                   FontSize="11"
+                                                                   Foreground="#FFFFC107"
+                                                                   Margin="6,0,0,0"
+                                                                   VerticalAlignment="Center"
+                                                                   ToolTip="{Binding MultipleVersionsTooltip}"
+                                                                   Visibility="{Binding HasMultipleVersions, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                    </StackPanel>
                                                     <TextBlock Grid.Column="4" Text="{Binding TargetFolderName}" 
                                               Foreground="#FF4CAF50" 
                                               Margin="5,0,0,0" 

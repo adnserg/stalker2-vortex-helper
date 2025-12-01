@@ -139,8 +139,16 @@ namespace Stalker2ModManager.Views
         {
             if (VersionsComboBox.SelectedItem is ModInfo newMod && newMod != _selectedMod)
             {
-                // Переключаем выбранную версию
+                // Сбрасываем флаг "основной" версии у предыдущей и помечаем новую версию как основную,
+                // чтобы при установке использовалась именно она.
+                if (_selectedMod != null)
+                {
+                    _selectedMod.IsPrimaryVersion = false;
+                }
+
                 _selectedMod = newMod;
+                _selectedMod.IsPrimaryVersion = true;
+
                 // Обновляем заголовок и список файлов для новой версии
                 UpdateLocalization();
                 LoadFiles();

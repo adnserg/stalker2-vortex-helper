@@ -21,6 +21,13 @@ namespace Stalker2ModManager.Models
         // остальные остаются в коллекции, но скрываются фильтром.
         private bool _isPrimaryVersion = true;
         
+        // Признак того, что у мода есть несколько версий (несколько папок с одним базовым именем).
+        // Используется только для визуального индикатора в списке.
+        private bool _hasMultipleVersions;
+        
+        // Локализованная подсказка для индикатора нескольких версий.
+        private string _multipleVersionsTooltip = string.Empty;
+        
         // Словарь для хранения информации о включенных/отключенных файлах
         // Ключ - относительный путь файла от SourcePath, значение - включен ли файл
         private Dictionary<string, bool> _fileStates = new Dictionary<string, bool>();
@@ -97,6 +104,34 @@ namespace Stalker2ModManager.Models
                 if (_isPrimaryVersion == value) return;
                 _isPrimaryVersion = value;
                 OnPropertyChanged(nameof(IsPrimaryVersion));
+            }
+        }
+
+        /// <summary>
+        /// Есть ли у мода несколько версий (для отображения индикатора в списке).
+        /// </summary>
+        public bool HasMultipleVersions
+        {
+            get => _hasMultipleVersions;
+            set
+            {
+                if (_hasMultipleVersions == value) return;
+                _hasMultipleVersions = value;
+                OnPropertyChanged(nameof(HasMultipleVersions));
+            }
+        }
+
+        /// <summary>
+        /// Текст подсказки для индикатора нескольких версий (локализованный).
+        /// </summary>
+        public string MultipleVersionsTooltip
+        {
+            get => _multipleVersionsTooltip;
+            set
+            {
+                if (_multipleVersionsTooltip == value) return;
+                _multipleVersionsTooltip = value ?? string.Empty;
+                OnPropertyChanged(nameof(MultipleVersionsTooltip));
             }
         }
 

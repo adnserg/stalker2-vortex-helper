@@ -198,6 +198,8 @@ namespace Stalker2ModManager.Views
                     var single = modsInGroup[0];
                     single.DisplayName = single.Name;
                     single.IsPrimaryVersion = true;
+                    single.HasMultipleVersions = false;
+                    single.MultipleVersionsTooltip = string.Empty;
                 }
                 else
                 {
@@ -220,17 +222,23 @@ namespace Stalker2ModManager.Views
                     }
 
                     // Для основной версии показываем только базовое имя,
-                    // чтобы в списке был один логический мод.
+                    // а также выбранную версию (имя папки) в скобках, чтобы было видно текущую версию.
+                    // Для остальных версий выставляем флаг HasMultipleVersions и помечаем их как неосновные.
                     foreach (var mod in modsInGroup)
                     {
                         if (mod == primary)
                         {
                             mod.IsPrimaryVersion = true;
-                            mod.DisplayName = baseName;
+                            mod.HasMultipleVersions = modsInGroup.Count > 1;
+                            // Пример: "Quests (Quests - 1.0.1)" – базовое имя + выбранная версия
+                            mod.DisplayName = $"{baseName} ({primary.Name})";
+                            mod.MultipleVersionsTooltip = _localization.GetString("MultipleVersionsAvailable") ?? "Multiple versions available";
                         }
                         else
                         {
                             mod.IsPrimaryVersion = false;
+                            mod.HasMultipleVersions = modsInGroup.Count > 1;
+                            mod.MultipleVersionsTooltip = _localization.GetString("MultipleVersionsAvailable") ?? "Multiple versions available";
                             // Для скрытых версий DisplayName сейчас не принципиален.
                         }
                     }
@@ -931,10 +939,17 @@ namespace Stalker2ModManager.Views
                     //UpdateStatus($"Installing: {p.CurrentMod} ({p.Installed}/{p.Total})");
                 });
 
-                var enabledModsCount = _mods.Count(m => m.IsEnabled);
-                _logger.LogInfo($"Starting mods installation. Target: {TargetPathTextBox.Text}, Enabled mods: {enabledModsCount}");
+                // Устанавливаем только включенные "основные" версии модов,
+                // чтобы для модов с несколькими версиями использовалась выбранная версия.
+                var modsToInstall = _mods
+                    .Where(m => m.IsEnabled && m.IsPrimaryVersion)
+                    .OrderBy(m => m.Order)
+                    .ToList();
+
+                var enabledModsCount = modsToInstall.Count;
+                _logger.LogInfo($"Starting mods installation. Target: {TargetPathTextBox.Text}, Enabled primary mods: {enabledModsCount}");
                 
-                await _modManagerService.InstallModsAsync([.. _mods], TargetPathTextBox.Text, progress, _installCancellationTokenSource.Token);
+                await _modManagerService.InstallModsAsync(modsToInstall, TargetPathTextBox.Text, progress, _installCancellationTokenSource.Token);
 
                 if (_installCancellationTokenSource.Token.IsCancellationRequested)
                 {

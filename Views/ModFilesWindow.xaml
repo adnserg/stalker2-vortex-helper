@@ -121,7 +121,8 @@
                                 <Border Name="DropDownBorder"
                                         Background="#FF2D2D30"
                                         BorderThickness="1"
-                                        CornerRadius="4">
+                                        CornerRadius="4"
+                                        Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ComboBox}}">
                                     <Border.Effect>
                                         <DropShadowEffect Color="#80000000" BlurRadius="8" ShadowDepth="2" Opacity="0.5"/>
                                     </Border.Effect>
@@ -142,37 +143,37 @@
         <Grid Margin="15">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- Title + version selector -->
-            <Grid Grid.Row="0" Margin="0,0,0,15" MouseDown="TitleBar_MouseDown">
+            <!-- Title bar -->
+            <Grid Grid.Row="0" Margin="0,0,0,8" MouseDown="TitleBar_MouseDown">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <StackPanel Orientation="Vertical" Grid.Column="0">
-                    <TextBlock x:Name="TitleTextBlock" 
+                <TextBlock x:Name="TitleTextBlock" 
                           Text="Mod Files" 
                           FontSize="16" 
                           FontWeight="Bold"
                           Foreground="#FFFFFFFF"
                           VerticalAlignment="Center"/>
-                    <!-- Выбор версии мода, если их несколько -->
-                    <ComboBox x:Name="VersionsComboBox"
-                              Margin="0,6,0,0"
-                              Height="26"
-                              DisplayMemberPath="Name"
-                              SelectionChanged="VersionsComboBox_SelectionChanged"/>
-                </StackPanel>
-                <Button Grid.Column="2" Content="✕" Width="30" Height="30" Click="Close_Click"
+                <Button Grid.Column="1" Content="✕" Width="30" Height="30" Click="Close_Click"
                         Padding="0"/>
             </Grid>
 
+            <!-- Version selector below title -->
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
+                <ComboBox x:Name="VersionsComboBox"
+                          Height="26"
+                          DisplayMemberPath="Name"
+                          SelectionChanged="VersionsComboBox_SelectionChanged" Width="666"/>
+            </StackPanel>
+
             <!-- Files List -->
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,0,0,15">
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="0,0,0,15">
                 <ItemsControl x:Name="FilesItemsControl">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -187,7 +188,7 @@
             </ScrollViewer>
 
             <!-- Buttons -->
-            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button x:Name="SelectAllButton" Content="Select All" Click="SelectAll_Click" Padding="15,8" Margin="0,0,8,0"/>
                 <Button x:Name="DeselectAllButton" Content="Deselect All" Click="DeselectAll_Click" Padding="15,8" Margin="0,0,8,0"/>
                 <Button x:Name="OkButton" Content="OK" Click="Ok_Click" Padding="15,8"/>
