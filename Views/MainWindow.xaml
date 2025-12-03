@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Stalker2ModManager.Helpers"
+        xmlns:svc="clr-namespace:Stalker2ModManager.Services"
         mc:Ignorable="d"
         Title="S.T.A.L.K.E.R. 2 Mod Manager" Height="700" Width="800"
         Background="#FF1E1E1E" WindowStyle="None" AllowsTransparency="True"
@@ -785,7 +786,7 @@
                                               Foreground="#FFFFA500"
                                               Margin="3,0,0,0"
                                               VerticalAlignment="Center"
-                                              ToolTip="Some files are disabled"
+                                              ToolTip="{Binding DisabledFilesTooltip}"
                                               Visibility="{Binding AggregatedHasDisabledFiles, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                                     <StackPanel Grid.Column="3"
                                                                 Orientation="Horizontal"

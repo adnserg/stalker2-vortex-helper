@@ -205,7 +205,7 @@ namespace Stalker2ModManager.Views
 
                     if (modsInGroup.Count == 1)
                     {
-                        // Одиночный мод: отображаем исходное имя, чекбокс = IsEnabled, предупреждение, если мод выключен
+                        // Одиночный мод: отображаем исходное имя
                         var single = modsInGroup[0];
                         single.DisplayName = single.Name;
                         single.IsPrimaryVersion = true;
@@ -213,14 +213,18 @@ namespace Stalker2ModManager.Views
                         single.InstalledVersionsCount = single.IsEnabled ? 1 : 0;
                         single.MultipleVersionsTooltip = string.Empty;
                         single.GroupIsEnabled = single.IsEnabled;
-                        // Если мод выключен, показываем предупреждение; если включён — нет
-                        single.AggregatedHasDisabledFiles = !single.IsEnabled;
+                        single.DisabledFilesTooltip = _localization.GetString("SomeFilesDisabled") ?? "Some files are disabled";
+
+                        // Предупреждение: если мод включён и при этом есть отключённые файлы
+                        bool singleHasDisabledFiles = single.IsEnabled && single.HasDisabledFiles;
+                        single.AggregatedHasDisabledFiles = singleHasDisabledFiles;
                     }
                     else
                     {
                         string baseName = group.Key;
                         // Считаем, сколько версий включены для установки
-                        int enabledCount = modsInGroup.Count(m => m.IsEnabled);
+                        var enabledMods = modsInGroup.Where(m => m.IsEnabled).ToList();
+                        int enabledCount = enabledMods.Count;
                         bool anyEnabled = enabledCount > 0;
 
                         // Сохраняем уже выбранную "основную" версию, если она есть в группе
@@ -250,7 +254,7 @@ namespace Stalker2ModManager.Views
                         }
                         else if (enabledCount == 1)
                         {
-                            var onlyEnabled = modsInGroup.First(m => m.IsEnabled);
+                            var onlyEnabled = enabledMods[0];
                             displayName = $"{baseName} ({onlyEnabled.Name})";
                         }
                         else
@@ -267,6 +271,7 @@ namespace Stalker2ModManager.Views
                                 mod.InstalledVersionsCount = enabledCount;
                                 mod.DisplayName = displayName;
                                 mod.MultipleVersionsTooltip = _localization.GetString("MultipleVersionsAvailable") ?? "Multiple versions available";
+                                mod.DisabledFilesTooltip = _localization.GetString("SomeFilesDisabled") ?? "Some files are disabled";
                             }
                             else
                             {
@@ -274,6 +279,7 @@ namespace Stalker2ModManager.Views
                                 mod.HasMultipleVersions = modsInGroup.Count > 1;
                                 mod.InstalledVersionsCount = enabledCount;
                                 mod.MultipleVersionsTooltip = _localization.GetString("MultipleVersionsAvailable") ?? "Multiple versions available";
+                                mod.DisabledFilesTooltip = _localization.GetString("SomeFilesDisabled") ?? "Some files are disabled";
                                 // Для скрытых версий DisplayName сейчас не принципиален.
                             }
                         }
@@ -282,9 +288,9 @@ namespace Stalker2ModManager.Views
                         primary.GroupIsEnabled = anyEnabled;
 
                         // Предупреждение в главном списке:
-                        // если хотя бы одна версия включена — предупреждение НЕ показываем,
-                        // если все версии выключены — показываем.
-                        primary.AggregatedHasDisabledFiles = !anyEnabled;
+                        // появляется только если среди ВКЛЮЧЁННЫХ версий есть отключённые файлы.
+                        bool anyDisabledInEnabledMods = enabledMods.Any(m => m.HasDisabledFiles);
+                        primary.AggregatedHasDisabledFiles = anyDisabledInEnabledMods;
                     }
                 }
 

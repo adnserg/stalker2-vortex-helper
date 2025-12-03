@@ -42,6 +42,9 @@ namespace Stalker2ModManager.Models
         // Групповой флаг "мод включён" для отображения чекбокса в главном списке (по всем версиям).
         private bool _groupIsEnabled;
 
+        // Локализованный текст подсказки для индикатора отключённых файлов.
+        private string _disabledFilesTooltip = string.Empty;
+
         public string SourcePath
         {
             get => _sourcePath;
@@ -165,6 +168,20 @@ namespace Stalker2ModManager.Models
         /// Флаг, что для данного мода включено более одной версии (будут установлены несколько версий).
         /// </summary>
         public bool HasMultipleInstalledVersions => _installedVersionsCount > 1;
+
+        /// <summary>
+        /// Локализованный текст подсказки для индикатора отключённых файлов.
+        /// </summary>
+        public string DisabledFilesTooltip
+        {
+            get => _disabledFilesTooltip;
+            set
+            {
+                if (_disabledFilesTooltip == value) return;
+                _disabledFilesTooltip = value ?? string.Empty;
+                OnPropertyChanged(nameof(DisabledFilesTooltip));
+            }
+        }
 
         /// <summary>
         /// Групповое состояние "включённости" мода (по всем версиям) для чекбокса в главном списке.
