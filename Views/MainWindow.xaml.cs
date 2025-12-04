@@ -259,7 +259,7 @@ namespace Stalker2ModManager.Views
                         // Выбираем отображаемое имя в зависимости от количества включённых версий:
                         // 0 включённых  -> просто базовое имя
                         // 1 включённая  -> базовое имя + выбранная версия
-                        // >1 включённых -> базовое имя + пометка, что выбрано несколько версий
+                        // >1 включённых -> базовое имя + локализованная пометка, что выбрано несколько версий
                         string displayName;
                         if (!anyEnabled)
                         {
@@ -272,7 +272,8 @@ namespace Stalker2ModManager.Views
                         }
                         else
                         {
-                            displayName = $"{baseName} - несколько версий";
+                            var multipleSelectedLabel = _localization.GetString("MultipleVersionsSelected") ?? "multiple versions";
+                            displayName = $"{baseName} - {multipleSelectedLabel}";
                         }
 
                         foreach (var mod in modsInGroup)
@@ -2850,17 +2851,15 @@ namespace Stalker2ModManager.Views
         {
             try
             {
-                var availableLanguages = _localization.GetAvailableLanguages();
-                var languageNames = _localization.GetLanguageNames();
-                
+                var languageNames = _localization.GetLanguageNames(); // Key: display name, Value: lang code
+
                 LanguageComboBox.Items.Clear();
-                
-                foreach (var langCode in availableLanguages)
+
+                foreach (var kvp in languageNames)
                 {
-                    var displayName = languageNames.TryGetValue(langCode, out string? value)
-                        ? $"{value} ({langCode.ToUpper()})" 
-                        : langCode.ToUpper();
-                    
+                    var displayName = kvp.Key;
+                    var langCode = kvp.Value;
+
                     var item = new System.Windows.Controls.ComboBoxItem
                     {
                         Content = displayName,
@@ -2918,8 +2917,11 @@ namespace Stalker2ModManager.Views
                     break;
                 }
             }
-            
+
+            // Обновляем локализованный UI и подписи
             UpdateLocalization();
+            // Пересчитываем отображаемые имена и локализованные подсказки модов/версий
+            UpdateModsDisplayNames();
         }
 
         private void LoadVersion()
