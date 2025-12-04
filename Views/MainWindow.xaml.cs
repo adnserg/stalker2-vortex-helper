@@ -2691,6 +2691,10 @@ namespace Stalker2ModManager.Views
             
             if (sender is System.Windows.Controls.CheckBox checkBox && checkBox.DataContext is ModInfo clickedMod)
             {
+                // Новое состояние чекбокса (IsChecked уже обновлён событием Click)
+                bool? isChecked = checkBox.IsChecked;
+                bool newState = isChecked == true;
+
                 // Если нажат Ctrl, добавляем/удаляем элемент из выделения
                 if (isCtrlPressed)
                 {
@@ -2712,15 +2716,19 @@ namespace Stalker2ModManager.Views
                 if (ModsListBox.SelectedItems.Count > 1)
                 {
                     // Если выделено несколько элементов, изменяем состояние всех выделенных чекбоксов
-                    // Получаем новое состояние чекбокса (IsChecked уже обновлен событием Click)
-                    bool? isChecked = checkBox.IsChecked;
-                    bool newState = isChecked == true;
-                    
                     // Применяем это состояние ко всем выделенным модам
                     foreach (ModInfo mod in ModsListBox.SelectedItems)
                     {
                         if (mod is ModInfo selectedMod)
                         {
+                            // Запрещаем включать моды без файлов или без включённых файлов
+                            if (newState && (!selectedMod.HasAnyFiles || !selectedMod.HasAnyEnabledFiles))
+                            {
+                                // Возвращаем визуальное состояние чекбокса для этого мода
+                                selectedMod.GroupIsEnabled = false;
+                                continue;
+                            }
+
                             selectedMod.IsEnabled = newState;
                         }
                     }
@@ -2731,6 +2739,23 @@ namespace Stalker2ModManager.Views
                     e.Handled = true;
                     return;
                 }
+
+                // Один мод (или выделение из одного элемента)
+                // Если пытаемся включить мод, у которого нет файлов, или у которого все файлы выключены — запрещаем.
+                if (newState && (!clickedMod.HasAnyFiles || !clickedMod.HasAnyEnabledFiles))
+                {
+                    // Возвращаем визуальное состояние чекбокса
+                    clickedMod.GroupIsEnabled = false;
+                    checkBox.IsChecked = false;
+                    e.Handled = true;
+                    return;
+                }
+
+                // Разрешённое включение/выключение одиночного мода
+                clickedMod.IsEnabled = newState;
+                MarkAsChanged();
+                e.Handled = true;
+                return;
             }
             
             // Если Ctrl не нажат и выделен один или ноль элементов, предотвращаем выделение элемента ListBox при клике на чекбокс
