@@ -42,6 +42,8 @@ namespace Stalker2ModManager.Views
         private bool _hasUnsavedChanges = false;
         private bool _isClosing = false;
         private bool _isApplyingOrder = false;
+        // Флаг для предотвращения рекурсивных вызовов при обновлении отображаемых имён и агрегированного состояния
+        private bool _isUpdatingDisplayNames = false;
         
         // Для отмены установки модов
         private CancellationTokenSource? _installCancellationTokenSource;
@@ -169,6 +171,160 @@ namespace Stalker2ModManager.Views
             {
                 // Мышь в середине - останавливаем скролл
                 _scrollTimer.Stop();
+            }
+        }
+
+        /// <summary>
+        /// Обновляет отображаемые имена модов (DisplayName), чтобы пользователю было видно,
+        /// когда под одним базовым названием есть несколько версий (разные папки).
+        /// </summary>
+        private void UpdateModsDisplayNames()
+        {
+            if (_isUpdatingDisplayNames)
+            {
+                return;
+            }
+
+            if (_mods == null || _mods.Count == 0)
+            {
+                return;
+            }
+
+            _isUpdatingDisplayNames = true;
+
+            // Группируем моды по базовому имени, очищенному от числовых суффиксов Nexus (NormalizeOrderName)
+            var groups = _mods
+                .GroupBy(m => NormalizeOrderName(m.Name), StringComparer.InvariantCultureIgnoreCase)
+                .ToList();
+
+            try
+            {
+                foreach (var group in groups)
+                {
+                    var modsInGroup = group.ToList();
+
+                    if (modsInGroup.Count == 1)
+                    {
+                        // Одиночный мод: отображаем исходное имя
+                        var single = modsInGroup[0];
+                        single.DisplayName = single.Name;
+                        single.IsPrimaryVersion = true;
+                        single.HasMultipleVersions = false;
+                        single.InstalledVersionsCount = single.IsEnabled ? 1 : 0;
+                        single.MultipleVersionsTooltip = string.Empty;
+
+                        // Групповой чекбокс включён только если мод можно установить (есть файлы и есть хотя бы один включенный файл)
+                        bool canInstall = single.HasAnyFiles && single.HasAnyEnabledFiles;
+                        single.GroupIsEnabled = single.IsEnabled && canInstall;
+
+                        // Подсказка и предупреждение:
+                        // - если файлов нет, показываем текст "нет файлов" и всегда показываем индикатор
+                        // - если файлы есть и мод включён, но есть отключённые файлы, показываем предупреждение
+                        if (!single.HasAnyFiles)
+                        {
+                            single.DisabledFilesTooltip = _localization.GetString("NoFilesFound") ?? "No files found in this mod folder";
+                            single.AggregatedHasDisabledFiles = true;
+                        }
+                        else
+                        {
+                            single.DisabledFilesTooltip = _localization.GetString("SomeFilesDisabled") ?? "Some files are disabled";
+                            bool singleHasDisabledFiles = single.IsEnabled && single.HasDisabledFiles;
+                            single.AggregatedHasDisabledFiles = singleHasDisabledFiles;
+                        }
+                    }
+                    else
+                    {
+                        string baseName = group.Key;
+                        // Считаем, сколько версий включены для установки
+                        var enabledMods = modsInGroup.Where(m => m.IsEnabled).ToList();
+                        int enabledCount = enabledMods.Count;
+                        bool anyEnabled = enabledCount > 0;
+
+                        // Сохраняем уже выбранную "основную" версию, если она есть в группе
+                        var existingPrimary = modsInGroup.FirstOrDefault(m => m.IsPrimaryVersion);
+
+                        ModInfo primary;
+                        if (existingPrimary != null)
+                        {
+                            primary = existingPrimary;
+                        }
+                        else
+                        {
+                            // Если первичная версия не помечена, выбираем мод с "максимальным" именем (часто это последняя версия)
+                            primary = modsInGroup
+                                .OrderBy(m => m.Name, StringComparer.InvariantCultureIgnoreCase)
+                                .Last();
+                        }
+
+                        // Выбираем отображаемое имя в зависимости от количества включённых версий:
+                        // 0 включённых  -> просто базовое имя
+                        // 1 включённая  -> базовое имя + выбранная версия
+                        // >1 включённых -> базовое имя + пометка, что выбрано несколько версий
+                        string displayName;
+                        if (!anyEnabled)
+                        {
+                            displayName = baseName;
+                        }
+                        else if (enabledCount == 1)
+                        {
+                            var onlyEnabled = enabledMods[0];
+                            displayName = $"{baseName} ({onlyEnabled.Name})";
+                        }
+                        else
+                        {
+                            displayName = $"{baseName} - несколько версий";
+                        }
+
+                        foreach (var mod in modsInGroup)
+                        {
+                            if (mod == primary)
+                            {
+                                mod.IsPrimaryVersion = true;
+                                mod.HasMultipleVersions = modsInGroup.Count > 1;
+                                mod.InstalledVersionsCount = enabledCount;
+                                mod.DisplayName = displayName;
+                                mod.MultipleVersionsTooltip = _localization.GetString("MultipleVersionsAvailable") ?? "Multiple versions available";
+                                mod.DisabledFilesTooltip = _localization.GetString("SomeFilesDisabled") ?? "Some files are disabled";
+                            }
+                            else
+                            {
+                                mod.IsPrimaryVersion = false;
+                                mod.HasMultipleVersions = modsInGroup.Count > 1;
+                                mod.InstalledVersionsCount = enabledCount;
+                                mod.MultipleVersionsTooltip = _localization.GetString("MultipleVersionsAvailable") ?? "Multiple versions available";
+                                mod.DisabledFilesTooltip = _localization.GetString("SomeFilesDisabled") ?? "Some files are disabled";
+                                // Для скрытых версий DisplayName сейчас не принципиален.
+                            }
+                        }
+
+                        // Групповой чекбокс в главном списке: включён, если включена хотя бы одна версия и у неё есть включённые файлы.
+                        bool anyInstallableVersion = modsInGroup.Any(m => m.HasAnyFiles && m.HasAnyEnabledFiles && m.IsEnabled);
+                        primary.GroupIsEnabled = anyInstallableVersion;
+
+                        // Предупреждение в главном списке:
+                        // - если ни в одной версии нет файлов, показываем "нет файлов"
+                        // - иначе, если среди включённых версий есть отключённые файлы, показываем стандартное предупреждение
+                        bool groupHasFiles = modsInGroup.Any(m => m.HasAnyFiles);
+                        if (!groupHasFiles)
+                        {
+                            primary.DisabledFilesTooltip = _localization.GetString("NoFilesFound") ?? "No files found in this mod folder";
+                            primary.AggregatedHasDisabledFiles = true;
+                        }
+                        else
+                        {
+                            primary.DisabledFilesTooltip = _localization.GetString("SomeFilesDisabled") ?? "Some files are disabled";
+                            bool anyDisabledInEnabledMods = enabledMods.Any(m => m.HasDisabledFiles);
+                            primary.AggregatedHasDisabledFiles = anyDisabledInEnabledMods;
+                        }
+                    }
+                }
+
+                // Обновляем представление списка модов после изменения DisplayName / IsPrimaryVersion
+                _modsViewSource?.View?.Refresh();
+            }
+            finally
+            {
+                _isUpdatingDisplayNames = false;
             }
         }
 
@@ -391,6 +547,9 @@ namespace Stalker2ModManager.Views
                 _mods.Add(mod);
             }
 
+            // Обновляем отображаемые имена модов (с учетом базового имени и возможных дублей по версиям)
+            UpdateModsDisplayNames();
+
             // Сортируем по порядку
             var sortedMods = _mods.OrderBy(m => m.Order).ToList();
             _mods.Clear();
@@ -590,6 +749,19 @@ namespace Stalker2ModManager.Views
                 if (e.PropertyName == nameof(ModInfo.Order) || e.PropertyName == nameof(ModInfo.IsEnabled))
                 {
                     MarkAsChanged();
+
+                    // При изменении включения/отключения версий пересчитываем
+                    // отображаемые имена и индикаторы множественных установок
+                    if (e.PropertyName == nameof(ModInfo.IsEnabled))
+                    {
+                        UpdateModsDisplayNames();
+                    }
+                }
+
+                // При изменении набора отключённых файлов пересчитываем агрегированный индикатор
+                if (e.PropertyName == nameof(ModInfo.HasDisabledFiles))
+                {
+                    UpdateModsDisplayNames();
                 }
             };
         }
@@ -859,10 +1031,17 @@ namespace Stalker2ModManager.Views
                     //UpdateStatus($"Installing: {p.CurrentMod} ({p.Installed}/{p.Total})");
                 });
 
-                var enabledModsCount = _mods.Count(m => m.IsEnabled);
+                // Устанавливаем все включенные версии модов.
+                // Пользователь может вручную включить одну или несколько версий одного и того же мода.
+                var modsToInstall = _mods
+                    .Where(m => m.IsEnabled)
+                    .OrderBy(m => m.Order)
+                    .ToList();
+
+                var enabledModsCount = modsToInstall.Count;
                 _logger.LogInfo($"Starting mods installation. Target: {TargetPathTextBox.Text}, Enabled mods: {enabledModsCount}");
                 
-                await _modManagerService.InstallModsAsync([.. _mods], TargetPathTextBox.Text, progress, _installCancellationTokenSource.Token);
+                await _modManagerService.InstallModsAsync(modsToInstall, TargetPathTextBox.Text, progress, _installCancellationTokenSource.Token);
 
                 if (_installCancellationTokenSource.Token.IsCancellationRequested)
                 {
@@ -1008,13 +1187,17 @@ namespace Stalker2ModManager.Views
                 
                 if (string.IsNullOrEmpty(searchText))
                 {
-                    e.Accepted = true;
+                    // Без поисковой строки отображаем только "основные" версии модов
+                    e.Accepted = mod.IsPrimaryVersion;
                 }
                 else
                 {
                     string searchLower = searchText.ToLowerInvariant();
-                    e.Accepted = mod.Name.Contains(searchLower, StringComparison.InvariantCultureIgnoreCase) ||
-                                 mod.TargetFolderName.Contains(searchLower, StringComparison.InvariantCultureIgnoreCase);
+                    // При поиске всё равно ограничиваемся только основными версиями,
+                    // чтобы пользователь не видел несколько строк одного и того же мода.
+                    e.Accepted = mod.IsPrimaryVersion &&
+                                 (mod.Name.Contains(searchLower, StringComparison.InvariantCultureIgnoreCase) ||
+                                  mod.TargetFolderName.Contains(searchLower, StringComparison.InvariantCultureIgnoreCase));
                 }
             }
             else
@@ -1235,11 +1418,26 @@ namespace Stalker2ModManager.Views
                 var cfg = _configService.LoadPathsConfig();
                 bool considerVersion = cfg.ConsiderModVersion;
 
-                // Создаем словари для быстрого поиска модов по имени
+                // Создаем словарь для быстрого поиска модов по имени
                 var modsByName = _mods.ToDictionary(m => m.Name, m => m, StringComparer.InvariantCultureIgnoreCase);
-                var modsByNameNormalized = considerVersion
-                    ? null
-                    : _mods.ToDictionary(m => NormalizeOrderName(m.Name), m => m, StringComparer.InvariantCultureIgnoreCase);
+                
+                // Для режима без учета версий готовим группировку по базовому имени (NormalizeOrderName),
+                // чтобы корректно обрабатывать несколько версий одного и того же мода
+                Dictionary<string, List<ModInfo>>? modsByBaseName = null;
+                if (!considerVersion)
+                {
+                    modsByBaseName = new Dictionary<string, List<ModInfo>>(StringComparer.InvariantCultureIgnoreCase);
+                    foreach (var mod in _mods)
+                    {
+                        var baseName = NormalizeOrderName(mod.Name);
+                        if (!modsByBaseName.TryGetValue(baseName, out var list))
+                        {
+                            list = new List<ModInfo>();
+                            modsByBaseName[baseName] = list;
+                        }
+                        list.Add(mod);
+                    }
+                }
 
                 // Применяем порядок и статус включения из конфига
                 foreach (var orderItem in order.Mods.OrderBy(m => m.Order))
@@ -1255,7 +1453,14 @@ namespace Stalker2ModManager.Views
                         if (!modsByName.TryGetValue(orderItem.Name, out mod))
                         {
                             var normalized = NormalizeOrderName(orderItem.Name);
-                            modsByNameNormalized!.TryGetValue(normalized, out mod);
+                            if (modsByBaseName != null && modsByBaseName.TryGetValue(normalized, out var list) && list.Count > 0)
+                            {
+                                // По умолчанию используем "последнюю" версию (по алфавиту имени папки),
+                                // чтобы при отключенном учёте версий автоматически брать самую новую.
+                                mod = list
+                                    .OrderBy(m => m.Name, StringComparer.InvariantCultureIgnoreCase)
+                                    .Last();
+                            }
                         }
                     }
 
@@ -1293,6 +1498,9 @@ namespace Stalker2ModManager.Views
 
                 // Обновляем порядки после сортировки
                 UpdateOrders();
+                
+                // Обновляем отображаемые имена модов (после применения порядка и возможных изменений)
+                UpdateModsDisplayNames();
                 
                 // Подписываемся на изменения всех модов
                 foreach (var mod in _mods)
@@ -2483,6 +2691,10 @@ namespace Stalker2ModManager.Views
             
             if (sender is System.Windows.Controls.CheckBox checkBox && checkBox.DataContext is ModInfo clickedMod)
             {
+                // Новое состояние чекбокса (IsChecked уже обновлён событием Click)
+                bool? isChecked = checkBox.IsChecked;
+                bool newState = isChecked == true;
+
                 // Если нажат Ctrl, добавляем/удаляем элемент из выделения
                 if (isCtrlPressed)
                 {
@@ -2504,15 +2716,19 @@ namespace Stalker2ModManager.Views
                 if (ModsListBox.SelectedItems.Count > 1)
                 {
                     // Если выделено несколько элементов, изменяем состояние всех выделенных чекбоксов
-                    // Получаем новое состояние чекбокса (IsChecked уже обновлен событием Click)
-                    bool? isChecked = checkBox.IsChecked;
-                    bool newState = isChecked == true;
-                    
                     // Применяем это состояние ко всем выделенным модам
                     foreach (ModInfo mod in ModsListBox.SelectedItems)
                     {
                         if (mod is ModInfo selectedMod)
                         {
+                            // Запрещаем включать моды без файлов или без включённых файлов
+                            if (newState && (!selectedMod.HasAnyFiles || !selectedMod.HasAnyEnabledFiles))
+                            {
+                                // Возвращаем визуальное состояние чекбокса для этого мода
+                                selectedMod.GroupIsEnabled = false;
+                                continue;
+                            }
+
                             selectedMod.IsEnabled = newState;
                         }
                     }
@@ -2523,6 +2739,23 @@ namespace Stalker2ModManager.Views
                     e.Handled = true;
                     return;
                 }
+
+                // Один мод (или выделение из одного элемента)
+                // Если пытаемся включить мод, у которого нет файлов, или у которого все файлы выключены — запрещаем.
+                if (newState && (!clickedMod.HasAnyFiles || !clickedMod.HasAnyEnabledFiles))
+                {
+                    // Возвращаем визуальное состояние чекбокса
+                    clickedMod.GroupIsEnabled = false;
+                    checkBox.IsChecked = false;
+                    e.Handled = true;
+                    return;
+                }
+
+                // Разрешённое включение/выключение одиночного мода
+                clickedMod.IsEnabled = newState;
+                MarkAsChanged();
+                e.Handled = true;
+                return;
             }
             
             // Если Ctrl не нажат и выделен один или ноль элементов, предотвращаем выделение элемента ListBox при клике на чекбокс
@@ -2566,7 +2799,13 @@ namespace Stalker2ModManager.Views
         {
             try
             {
-                var window = new ModFilesWindow(mod)
+                // Находим все версии этого мода с тем же базовым именем (NormalizeOrderName)
+                var baseName = NormalizeOrderName(mod.Name);
+                var versions = _mods
+                    .Where(m => string.Equals(NormalizeOrderName(m.Name), baseName, StringComparison.InvariantCultureIgnoreCase))
+                    .ToList();
+
+                var window = new ModFilesWindow(mod, versions)
                 {
                     Owner = this
                 };

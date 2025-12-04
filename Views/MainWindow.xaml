@@ -3,6 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Stalker2ModManager.Helpers"
+        xmlns:svc="clr-namespace:Stalker2ModManager.Services"
         mc:Ignorable="d"
         Title="S.T.A.L.K.E.R. 2 Mod Manager" Height="700" Width="800"
         Background="#FF1E1E1E" WindowStyle="None" AllowsTransparency="True"
@@ -10,6 +12,12 @@
     <Window.Resources>
         <!-- Converters -->
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <!-- Converter: bool -> color (для индикатора нескольких установленных версий) -->
+        <SolidColorBrush x:Key="MultiVersionWarningBrush" Color="#FFFF5252"/>
+        <SolidColorBrush x:Key="MultiVersionInfoBrush" Color="#FFFFC107"/>
+        <local:BooleanToBrushConverter x:Key="BooleanToColorConverter"
+                                       TrueBrush="{StaticResource MultiVersionWarningBrush}"
+                                       FalseBrush="{StaticResource MultiVersionInfoBrush}"/>
         
         <!-- Color Resources -->
         <SolidColorBrush x:Key="HoverBackgroundBrush" Color="#FF5A5A5A"/>
@@ -765,26 +773,38 @@
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
                                                     <CheckBox Grid.Column="0" 
-                                            IsChecked="{Binding IsEnabled}" 
+                                            IsChecked="{Binding GroupIsEnabled}" 
                                             Click="CheckBox_Click"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding Order, StringFormat='[{0}]'}" 
                                               FontWeight="Bold" 
                                               Foreground="#FF007ACC"
                                               HorizontalAlignment="Center"/>
-                                                    <!-- Индикатор отключенных файлов -->
+                                                    <!-- Индикатор отключенных файлов (учитывает все версии мода) -->
                                                     <TextBlock Grid.Column="2" 
-                                              Text="⚠" 
+                                              Text="⚠"  
                                               FontSize="14"
                                               Foreground="#FFFFA500"
                                               Margin="3,0,0,0"
                                               VerticalAlignment="Center"
-                                              ToolTip="Some files are disabled"
-                                              Visibility="{Binding HasDisabledFiles, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                                                    <TextBlock Grid.Column="3" Text="{Binding Name}" 
-                                              Foreground="#FFFFFFFF"
-                                              FontSize="12"
-                                              Margin="5,0,0,0"
-                                              VerticalAlignment="Center"/>
+                                              ToolTip="{Binding DisabledFilesTooltip}"
+                                              Visibility="{Binding AggregatedHasDisabledFiles, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                    <StackPanel Grid.Column="3"
+                                                                Orientation="Horizontal"
+                                                                VerticalAlignment="Center"
+                                                                Margin="5,0,0,0">
+                                                        <TextBlock Text="{Binding DisplayName}" 
+                                                                   Foreground="#FFFFFFFF"
+                                                                   FontSize="12"
+                                                                   VerticalAlignment="Center"/>
+                                                        <!-- Индикатор того, что у мода есть несколько версий -->
+                                                        <TextBlock Text="⧉"
+                                                                   FontSize="11"
+                                                                   Foreground="{Binding HasMultipleInstalledVersions, Converter={StaticResource BooleanToColorConverter}}"
+                                                                   Margin="6,0,0,0"
+                                                                   VerticalAlignment="Center"
+                                                                   ToolTip="{Binding MultipleVersionsTooltip}"
+                                                                   Visibility="{Binding HasMultipleVersions, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                    </StackPanel>
                                                     <TextBlock Grid.Column="4" Text="{Binding TargetFolderName}" 
                                               Foreground="#FF4CAF50" 
                                               Margin="5,0,0,0" 

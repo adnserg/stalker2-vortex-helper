@@ -37,12 +37,25 @@ namespace Stalker2ModManager.Services
                     continue;
                 }
 
+                // Проверяем, есть ли вообще файлы в папке мода (включая подпапки)
+                bool hasAnyFiles = false;
+                try
+                {
+                    hasAnyFiles = Directory.EnumerateFiles(dir, "*", SearchOption.AllDirectories).Any();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Error checking files for mod folder '{dirInfo.Name}': {ex.Message}");
+                }
+
                 var modInfo = new ModInfo
                 {
                     SourcePath = dir,
                     Name = dirInfo.Name,
                     Order = order++,
-                    IsEnabled = true
+                    // Если в папке нет файлов, мод по умолчанию не включаем для установки.
+                    IsEnabled = hasAnyFiles,
+                    HasAnyFiles = hasAnyFiles
                 };
 
                 mods.Add(modInfo);

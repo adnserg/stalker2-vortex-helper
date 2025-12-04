@@ -120,7 +120,9 @@
     "SelectAll": "Select All",
     "DeselectAll": "Deselect All",
     "OpenModFiles": "Open Mod Files",
-    "SomeFilesDisabled": "Some files are disabled"
+    "SomeFilesDisabled": "Some files are disabled",
+    "MultipleVersionsAvailable": "Multiple versions available",
+    "NoFilesFound": "No files found in this mod folder"
   },
   "ru": {
     "WindowTitle": "Менеджер модов S.T.A.L.K.E.R. 2",
@@ -243,7 +245,9 @@
     "SelectAll": "Выбрать все",
     "DeselectAll": "Снять выбор",
     "OpenModFiles": "Открыть файлы мода",
-    "SomeFilesDisabled": "Некоторые файлы отключены"
+    "SomeFilesDisabled": "Некоторые файлы отключены",
+    "MultipleVersionsAvailable": "Доступно несколько версий",
+    "NoFilesFound": "В папке мода нет файлов"
   },
   "fr": {
     "WindowTitle": "Gestionnaire de mods S.T.A.L.K.E.R. 2",
@@ -348,7 +352,8 @@
     "OpenApplicationFolder": "Ouvrir le dossier de l'application",
     "OpenStalker2RootFolder": "Ouvrir le dossier racine de Stalker 2",
     "OpenModsFolder": "Ouvrir le dossier ~mods",
-    "ValidateGamePath": "Valider le chemin du jeu"
+    "ValidateGamePath": "Valider le chemin du jeu",
+    "MultipleVersionsAvailable": "Plusieurs versions disponibles"
   }
 }
 
