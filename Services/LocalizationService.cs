@@ -449,12 +449,37 @@ namespace Stalker2ModManager.Services
 
         public Dictionary<string, string> GetLanguageNames()
         {
-            return new Dictionary<string, string>
+            var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            // Берём человекочитаемое название языка из ключа "localisation" для каждого языка.
+            // Никаких доп. тегов или форматирования здесь не добавляем.
+            if (_translations != null)
             {
-                { "en", "English" },
-                { "ru", "Русский" },
-                { "fr", "Français" }
-            };
+                foreach (var kvp in _translations)
+                {
+                    var langCode = kvp.Key;
+                    var dict = kvp.Value;
+
+                    if (dict != null && dict.TryGetValue("localisation", out var displayName) && 
+                        !string.IsNullOrWhiteSpace(displayName))
+                    {
+                        result[langCode] = displayName;
+                    }
+                    else
+                    {
+                        // Fallback — просто код языка, если в словаре нет "localisation"
+                        result[langCode] = langCode;
+                    }
+                }
+            }
+
+            // Если по какой-то причине переводов нет — дефолтное значение
+            if (result.Count == 0)
+            {
+                result["English"] = "English";
+            }
+
+            return result;
         }
     }
 }
